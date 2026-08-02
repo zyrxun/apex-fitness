@@ -75,10 +75,54 @@ dev values and is never used in production.
 | `TOTP_ISSUER`              | no         | `Apex Fitness`                 | Label shown in authenticator apps                                                  |
 | `MAIL_TRANSPORT`           | no         | `console`                      | `console` \| `noop` \| `memory` (a real provider lands with the mobile app)        |
 | `MAIL_FROM`                | no         | `no-reply@apexfitness.example` |                                                                                    |
+| `APPLE_BUNDLE_ID`          | no         | —                              | iOS bundle identifier; enables `POST /auth/apple` (see below)                      |
+| `APPLE_AUDIENCES`          | no         | —                              | Comma-separated extra `aud` values (a web Services ID, a second bundle id)         |
+| `APPLE_JWKS_URL`           | no         | Apple's JWKS                   | Override only in tests                                                             |
 | `DEFAULT_REGION`           | no         | `global`                       | Region tag stamped on new users (China-fork readiness, PLAN §4.2)                  |
 | `PUBLIC_BASE_URL`          | no         | `http://localhost:3000`        | Server URL advertised in the OpenAPI document                                      |
 | `RATE_LIMIT_DISABLED`      | no         | `false`                        | Tests set `true` except in the rate-limit suite                                    |
 | `EXPOSE_DEV_TOKENS`        | no         | `true`                         | Returns email-verification/reset tokens in responses. Forced `false` in production |
+
+### Sign in with Apple
+
+`POST /auth/apple` implements the **native app flow**: the iOS client runs
+`ASAuthorizationController`, then posts the resulting `identityToken` (plus
+`fullName` on the very first authorization) here. The server verifies the token
+against Apple's JWKS and issues the same JWT access token + rotating refresh
+session as password login.
+
+Only one value has to be filled in:
+
+| Value             | Where to get it                                                                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `APPLE_BUNDLE_ID` | developer.apple.com → **Certificates, Identifiers & Profiles → Identifiers →** your App ID → **Identifier** (e.g. `com.apexfitness.app`) |
+
+The bundle id can be decided when the iOS app is created — it just has to match
+the App ID that has the **Sign In with Apple** capability enabled, because Apple
+stamps it into the token's `aud` claim. Until `APPLE_BUNDLE_ID` is set the route
+returns `501 oauth_not_configured`.
+
+A **web** sign-in flow (Sign in with Apple JS, or a browser redirect) would
+additionally need a **Services ID** and a **.p8 private key** for the client
+secret — neither is needed for the native app. When that day comes, add the
+Services ID to `APPLE_AUDIENCES`.
+
+Behaviour worth knowing:
+
+- **The name is one-shot.** Apple releases `fullName` only on the first
+  authorization and only to the client, so it is stored at account creation and
+  never overwritten afterwards.
+- **Verified-email linking.** An Apple sign-in whose `email_verified` claim is
+  true and whose address matches an existing account links to that account
+  rather than creating a second one; the existing password keeps working.
+- **Private-relay addresses** (`@privaterelay.appleid.com`) are stored like any
+  other email and flagged on the identity row.
+- **Passwordless accounts.** Apple-only accounts have no `credentials` row.
+  Password login for them fails with `use_social_login`, and account deletion
+  accepts a fresh `appleIdentityToken` in place of the password.
+- **TOTP still applies.** Apple is one strong factor; an enrolled authenticator
+  still produces an `mfa_required` response.
+- **Google is still 501.** `POST /auth/google` awaits its own credentials.
 
 ## Layout
 
@@ -91,7 +135,7 @@ src/
   dev.ts          dev entrypoint (embedded pg + migrate + serve)
   db/             schema.ts, client.ts, migrate.ts, embedded.ts
   lib/            crypto, jwt, errors, mailer, time, env-file
-  services/       users, sessions, totp, email-tokens, mfa-tickets, social
+  services/       users, sessions, totp, email-tokens, mfa-tickets, social, apple
   plugins/        auth (requireAuth decorator)
   routes/         auth, me, privacy, social, gdpr, users
 drizzle/          generated SQL migrations
@@ -114,9 +158,12 @@ test/             integration suites + embedded-pg global setup
 
 ## Not built yet (Phase 1 scope notes)
 
-- Apple/Google sign-in: the `identities` table and provider-agnostic seam exist;
-  `POST /auth/apple` and `POST /auth/google` return `501 oauth_not_configured`
-  pending real developer credentials. The integration is not faked.
+- Google sign-in: `POST /auth/google` still returns `501 oauth_not_configured`
+  pending developer credentials. The integration is not faked. Apple sign-in is
+  implemented (see above).
+- Apple **token revocation**: `authorizationCode` is accepted but not yet
+  exchanged at `appleid.apple.com/auth/token`, so deleting an account does not
+  revoke Apple's own grant. Apple requires this once the app ships.
 - Privacy-zone **auto-generation** from home/work addresses needs a geocoder and
   activity history; CRUD and the on-by-default flag are in place.
 - Quiet mode is stored and exposed on the profile; it has no feed to affect
