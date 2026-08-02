@@ -1,4 +1,4 @@
-import { eq, or } from 'drizzle-orm';
+import { and, eq, or } from 'drizzle-orm';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import {
   dataExportSchema,
@@ -26,10 +26,12 @@ import {
 import { unauthorized } from '../lib/errors.js';
 import { verifyPassword } from '../lib/crypto.js';
 import { revokeAllForUser } from '../services/sessions.js';
+import { verifyAppleIdentityToken } from '../services/apple.js';
 
 const errorResponses = {
   400: errorResponseSchema,
   401: errorResponseSchema,
+  501: errorResponseSchema,
 };
 
 const REDACTED = '[redacted]';
@@ -156,8 +158,34 @@ const gdprRoutes: FastifyPluginAsyncZod = async (app) => {
         .from(credentials)
         .where(eq(credentials.userId, userId))
         .limit(1);
-      if (!credential || !(await verifyPassword(credential.passwordHash, request.body.password))) {
-        throw unauthorized('invalid_credentials', 'Password is incorrect');
+
+      if (credential) {
+        if (
+          !request.body.password ||
+          !(await verifyPassword(credential.passwordHash, request.body.password))
+        ) {
+          throw unauthorized('invalid_credentials', 'Password is incorrect');
+        }
+      } else {
+        // Passwordless (Apple) accounts re-authenticate with a fresh identity
+        // token, so deletion is never a dead end for them.
+        if (!request.body.appleIdentityToken) {
+          throw unauthorized(
+            'reauth_required',
+            'This account has no password; re-authenticate with a fresh Apple identity token',
+          );
+        }
+        const identity = await verifyAppleIdentityToken(ctx, request.body.appleIdentityToken);
+        const [row] = await ctx.db
+          .select({ userId: identities.userId })
+          .from(identities)
+          .where(
+            and(eq(identities.provider, 'apple'), eq(identities.providerSubject, identity.subject)),
+          )
+          .limit(1);
+        if (row?.userId !== userId) {
+          throw unauthorized('invalid_credentials', 'Identity token does not match this account');
+        }
       }
 
       const now = new Date();
