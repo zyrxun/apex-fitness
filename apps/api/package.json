@@ -16,7 +16,7 @@
     "@apex/shared": "*",
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/swagger": "^9.5.1",
-    "@fastify/swagger-ui": "^5.2.3",
+    "@fastify/swagger-ui": "^6.1.1",
     "@node-rs/argon2": "^2.0.2",
     "drizzle-orm": "^0.45.2",
     "fastify": "^5.6.1",
