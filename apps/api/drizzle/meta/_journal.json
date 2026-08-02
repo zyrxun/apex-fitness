@@ -15,6 +15,13 @@
       "when": 1785649351978,
       "tag": "0001_identity_email",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785708240580,
+      "tag": "0002_activities",
+      "breakpoints": true
     }
   ]
 }
