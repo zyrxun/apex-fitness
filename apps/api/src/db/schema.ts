@@ -72,8 +72,8 @@ export const credentials = pgTable('credentials', {
   updatedAt,
 });
 
-// Seam for Apple/Google sign-in. Rows are only written once real provider
-// credentials exist; the routes currently return 501.
+// Provider-agnostic seam for Apple/Google sign-in. Apple is live; Google still
+// returns 501 pending credentials.
 export const identities = pgTable(
   'identities',
   {
@@ -83,6 +83,10 @@ export const identities = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     provider: identityProviderEnum('provider').notNull(),
     providerSubject: text('provider_subject').notNull(),
+    // Address the provider asserted, which may differ from users.email and,
+    // for Apple private relay, is an alias that only forwards for this app.
+    email: text('email'),
+    isPrivateEmail: boolean('is_private_email').notNull().default(false),
     createdAt,
     updatedAt,
   },

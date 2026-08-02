@@ -23,6 +23,13 @@ const envSchema = z.object({
   DEFAULT_REGION: z.string().default('global'),
   PUBLIC_BASE_URL: z.string().default('http://localhost:3000'),
 
+  // Sign in with Apple. Without APPLE_BUNDLE_ID the route keeps returning
+  // 501 oauth_not_configured, so the feature is opt-in per deployment.
+  APPLE_BUNDLE_ID: z.string().min(1).optional(),
+  APPLE_AUDIENCES: z.string().optional(),
+  // Overridable so tests can point at a local JWKS instead of the internet.
+  APPLE_JWKS_URL: z.string().default('https://appleid.apple.com/auth/keys'),
+
   RATE_LIMIT_DISABLED: z
     .union([z.literal('true'), z.literal('false')])
     .default('false')
@@ -42,6 +49,7 @@ export type AppConfig = Readonly<
     isTest: boolean;
     accessTokenTtlSeconds: number;
     refreshTokenTtlSeconds: number;
+    appleAudiences: readonly string[];
   }
 >;
 
@@ -55,6 +63,20 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   }
   const value = parsed.data;
   const isProduction = value.NODE_ENV === 'production';
+
+  // The bundle id is the native app's audience and the on/off switch for the
+  // whole feature; APPLE_AUDIENCES adds the web Services ID (and any second
+  // bundle id) once those flows exist.
+  const appleAudiences = value.APPLE_BUNDLE_ID
+    ? [
+        ...new Set(
+          [value.APPLE_BUNDLE_ID, ...(value.APPLE_AUDIENCES?.split(',') ?? [])]
+            .map((a) => a.trim())
+            .filter(Boolean),
+        ),
+      ]
+    : [];
+
   return Object.freeze({
     ...value,
     EXPOSE_DEV_TOKENS: isProduction ? false : value.EXPOSE_DEV_TOKENS,
@@ -62,5 +84,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     isTest: value.NODE_ENV === 'test',
     accessTokenTtlSeconds: value.ACCESS_TOKEN_TTL_MINUTES * 60,
     refreshTokenTtlSeconds: value.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60,
+    appleAudiences: Object.freeze(appleAudiences),
   });
 }
