@@ -166,15 +166,15 @@ Work through in order; phases 1–4 are the MVP line. Items marked 🇨🇳 are 
 - [ ] Domain, app-store developer accounts (Apple, Google Play), brand assets
 
 ### Phase 1 — Identity, Profiles & Privacy Core
-- [ ] Signup/login: email, Apple, Google; 2FA
-- [ ] Profile: name, photo, bio, sex, DOB (needed for age multipliers), bodyweight log with history
-- [ ] Units preference (metric/imperial) everywhere
-- [ ] Privacy model: per-activity visibility (public / followers / private), profile visibility
-- [ ] **Privacy zones ON by default** (auto-generated around home/work addresses)
-- [ ] Granular stats hiding (hide weight, hide pace, hide HR independently)
-- [ ] Quiet mode (low-pressure social: hides comparative numbers in feed)
-- [ ] GDPR tooling: full data export (one click), account deletion, consent management
-- [ ] Blocking, reporting, muting
+- [ ] Signup/login: email, Apple, Google; 2FA — *(email + TOTP 2FA backend done, mobile pending; Apple/Google seam built — `identities` table + routes — but returns 501 until we hold developer credentials)*
+- [ ] Profile: name, photo, bio, sex, DOB (needed for age multipliers), bodyweight log with history — *(backend done, mobile pending; photo is a URL field, upload pipeline pending)*
+- [ ] Units preference (metric/imperial) everywhere — *(backend done, mobile pending; canonical metric storage + conversion at the edge)*
+- [ ] Privacy model: per-activity visibility (public / followers / private), profile visibility — *(backend done, mobile pending; per-activity enforcement lands with Phase 2 activities)*
+- [ ] **Privacy zones ON by default** (auto-generated around home/work addresses) — *(backend done, mobile pending: zone CRUD + on-by-default flag; auto-generation needs a geocoder and activity history, and geo-fuzzing applies in Phase 2)*
+- [ ] Granular stats hiding (hide weight, hide pace, hide HR independently) — *(backend done, mobile pending)*
+- [ ] Quiet mode (low-pressure social: hides comparative numbers in feed) — *(backend done, mobile pending: profile flag stored and exposed; no feed to suppress until Phase 5)*
+- [ ] GDPR tooling: full data export (one click), account deletion, consent management — *(backend done, mobile pending: `GET /me/export` + `DELETE /me/account` with anonymisation; consent is currently the aggregate-data opt-in flag)*
+- [ ] Blocking, reporting, muting — *(backend done, mobile pending)*
 
 ### Phase 2 — Activity Recording (Endurance)
 - [ ] Native GPS background recording module (iOS + Android): start/pause/auto-pause/resume/stop
