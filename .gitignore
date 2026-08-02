@@ -1,0 +1,22 @@
+node_modules/
+dist/
+build/
+coverage/
+
+.env
+.env.local
+.env.*.local
+
+# embedded-postgres data directories (dev + test clusters)
+.pgdata/
+.pgdata-*/
+apps/api/.pgdata/
+apps/api/.pgdata-*/
+
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.tsbuildinfo
