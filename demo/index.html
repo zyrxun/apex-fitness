@@ -1,0 +1,2141 @@
+<title>Apex Fitness &mdash; Demo</title>
+
+<style>
+/* ==========================================================================
+   APEX FITNESS &mdash; clickable MVP demo
+   Design system: "Gunmetal & Ember"
+   --------------------------------------------------------------------------
+   Surfaces  cool near-black, hue-biased to 215 (slate), never #000
+   Accent    ember #FF4A24 &mdash; reserved: primary action, PRs, Apex tier, records
+   Semantic  engine (cardio) teal  #17A296  |  strength (iron) amber #C57F1F
+             both validated for dark-surface contrast + CVD separation
+   Tiers     a metallic ladder: gunmetal > copper > steel > gold > ice > blue > ember
+   Type      condensed-leaning display stack for numerals, neutral UI stack for
+             prose, mono for tabular data. tabular-nums everywhere digits align.
+   ========================================================================== */
+
+:root {
+  /* --- surfaces --- */
+  --ink-0:      #0A0D12;   /* page / behind the phone */
+  --ink-1:      #141920;   /* card surface */
+  --ink-2:      #1D242D;   /* elevated: chips, wells, bars */
+  --ink-3:      #252E39;   /* pressed / track */
+  --line:       #29323D;
+  --line-soft:  #1E2630;
+
+  /* --- ink --- */
+  --tx-1:       #EDF1F6;
+  --tx-2:       #A3AFBC;
+  --tx-3:       #78848F;
+
+  /* --- accent (reserved) --- */
+  --ember:      #FF4A24;
+  --ember-lo:   rgba(255, 74, 36, 0.14);
+  --ember-mid:  rgba(255, 74, 36, 0.32);
+
+  /* --- semantic duo --- */
+  --engine:     #17A296;   /* chart marks */
+  --engine-ink: #3FD3C4;   /* text / chips on dark */
+  --strength:   #C57F1F;
+  --strength-ink:#F0B45C;
+
+  /* --- status --- */
+  --good:       #3FD3C4;
+  --warn:       #E7B948;
+
+  /* --- rank tiers (ordinal, always shipped with a text label) --- */
+  --t-iron:      #79818C;
+  --t-bronze:    #C0763C;
+  --t-silver:    #C7CFD8;
+  --t-gold:      #E7B948;
+  --t-platinum:  #9BE3E8;
+  --t-diamond:   #7FB2FF;
+  --t-apex:      #FF5A32;
+
+  /* --- HR zones (ordinal heat ramp; always direct-labelled) --- */
+  --z1: #4A6FA5;
+  --z2: #17A296;
+  --z3: #C9A227;
+  --z4: #E0702A;
+  --z5: #D33F5E;
+
+  /* --- type --- */
+  --f-display: "SF Compact Display", "SF Pro Display", "Segoe UI Variable Display",
+               "Roboto Condensed", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-text:    ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-mono:    ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", "Roboto Mono",
+               Menlo, Consolas, monospace;
+
+  --r-card: 14px;
+  --r-chip: 999px;
+}
+
+/* This demo commits to one dark athletic theme on purpose &mdash; it must look
+   identical regardless of the viewer's OS colour scheme. */
+html { color-scheme: dark; background: var(--ink-0); }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--ink-0);
+  color: var(--tx-1);
+  font-family: var(--f-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+
+button { font: inherit; color: inherit; background: none; border: 0; margin: 0; padding: 0; cursor: pointer; }
+
+/* Outlines follow each element's own radius &mdash; never reset border-radius here. */
+:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+svg :focus-visible, svg *:focus { outline-offset: 0; }
+
+/* ===== stage + phone frame ============================================== */
+
+.stage {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background:
+    radial-gradient(120% 80% at 50% 0%, #131922 0%, var(--ink-0) 62%);
+}
+
+.phone {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  background: var(--ink-0);
+  overflow: hidden;
+}
+
+.app {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+@media (min-width: 760px) {
+  .stage { padding: 32px 16px; }
+  .phone {
+    width: 402px;
+    height: 858px;
+    max-height: calc(100dvh - 64px);
+    border-radius: 46px;
+    border: 1px solid #333C48;
+    box-shadow:
+      0 0 0 9px #10151C,
+      0 0 0 10px #333C48,
+      0 40px 90px rgba(0, 0, 0, 0.7);
+  }
+  .app { border-radius: 38px; }
+  .frame-note { display: block; }
+}
+
+.frame-note {
+  display: none;
+  position: fixed;
+  left: 24px;
+  bottom: 22px;
+  max-width: 210px;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: #4E5A67;
+}
+.frame-note b { color: #6E7B89; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; font-size: 10px; }
+
+/* ===== screens ========================================================== */
+
+.screen {
+  position: absolute;
+  inset: 0 0 62px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  display: none;
+  padding-bottom: 26px;
+  scrollbar-width: none;
+}
+.screen::-webkit-scrollbar { display: none; }
+.screen.is-active { display: block; }
+
+.screen--sub { inset: 0; z-index: 6; background: var(--ink-0); }
+.screen--sub.is-active { animation: push 240ms cubic-bezier(0.22, 0.9, 0.3, 1); }
+
+@keyframes push { from { transform: translateX(22px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ===== shared atoms ===================================================== */
+
+.wrap { padding: 0 16px; }
+
+.micro {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--tx-3);
+}
+
+.num { font-family: var(--f-display); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; font-weight: 800; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+.card {
+  background: var(--ink-1);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+
+.card + .card { margin-top: 12px; }
+
+.sec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 22px 0 10px;
+}
+.sec-head h2 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tx-2); }
+.sec-head .aside { font-size: 11px; color: var(--tx-3); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: var(--r-chip);
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--tx-2);
+  white-space: nowrap;
+}
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+
+/* tier chips &mdash; colour + text label together, never colour alone */
+.tier { font-weight: 750; letter-spacing: 0.06em; text-transform: uppercase; font-size: 10px; }
+.tier-iron     { color: var(--t-iron); }
+.tier-bronze   { color: var(--t-bronze); }
+.tier-silver   { color: var(--t-silver); }
+.tier-gold     { color: var(--t-gold); }
+.tier-platinum { color: var(--t-platinum); }
+.tier-diamond  { color: var(--t-diamond); }
+.tier-apex     { color: var(--t-apex); }
+
+.pr-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 9px 0 8px;
+  border-radius: var(--r-chip);
+  background: var(--ember-lo);
+  border: 1px solid var(--ember-mid);
+  color: var(--ember);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ico { display: block; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ===== top bars ========================================================= */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: rgba(10, 13, 18, 0.86);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.topbar__row {
+  height: 54px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: 0.02em;
+}
+.brand .mark { color: var(--ember); }
+
+.demo-pill {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--tx-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  padding: 3px 8px;
+}
+
+.backbtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--tx-2);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 8px 6px 2px;
+  margin-left: -4px;
+}
+.backbtn:hover { color: var(--tx-1); }
+
+.sub-title { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
+.sub-sub { font-size: 11px; color: var(--tx-3); margin-top: 1px; }
+
+/* ===== load strip (Form / Fatigue / Fitness) ============================ */
+
+.loadstrip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) auto;
+  align-items: center;
+  gap: 2px;
+  padding: 9px 16px 11px;
+  border-bottom: 1px solid var(--line-soft);
+  background: linear-gradient(180deg, rgba(23, 162, 150, 0.05), transparent);
+}
+.loadstrip .cell { display: flex; flex-direction: column; gap: 3px; }
+.loadstrip .v { font-family: var(--f-display); font-weight: 800; font-size: 19px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.loadstrip .state {
+  justify-self: end;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--good);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.loadstrip .state .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* ===== feed ============================================================= */
+
+.feed { padding: 12px 16px 0; }
+
+.fcard { display: block; width: 100%; text-align: left; margin-bottom: 12px; }
+.fcard--tap { transition: transform 120ms ease, border-color 120ms ease; }
+.fcard--tap:hover { border-color: var(--line); }
+.fcard--tap:active { transform: scale(0.992); }
+
+.fhead { display: flex; align-items: center; gap: 10px; padding: 13px 14px 10px; }
+
+.avatar {
+  width: 34px; height: 34px; flex: none;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--f-display);
+  font-weight: 800; font-size: 13px;
+  letter-spacing: 0.02em;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  color: var(--tx-2);
+}
+.avatar--me { background: var(--ember-lo); border-color: var(--ember-mid); color: var(--ember); }
+
+.fhead .who { display: block; font-size: 13.5px; font-weight: 700; letter-spacing: -0.01em; }
+.fhead .when { font-size: 11px; color: var(--tx-3); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+.sportmark { color: var(--tx-2); flex: none; }
+
+.ftitle { padding: 0 14px 10px; font-size: 15px; font-weight: 700; letter-spacing: -0.015em; }
+
+.statrow {
+  display: flex;
+  padding: 0 14px 12px;
+  gap: 0;
+}
+.statrow .s { flex: 1; min-width: 0; padding-right: 12px; }
+.statrow .s + .s { border-left: 1px solid var(--line-soft); padding-left: 12px; }
+.statrow .v { font-family: var(--f-display); font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; letter-spacing: -0.025em; line-height: 1.1; }
+.statrow .v small { font-size: 11px; font-weight: 700; color: var(--tx-3); margin-left: 2px; letter-spacing: 0; }
+.statrow .k { margin-top: 3px; }
+
+.note {
+  margin: 0 14px 12px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: var(--ink-2);
+  border-left: 2px solid var(--engine);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--tx-2);
+}
+.note b { color: var(--tx-1); font-weight: 650; }
+.note--iron { border-left-color: var(--strength); }
+
+.routebox { background: #10151C; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
+.routebox svg { display: block; width: 100%; height: auto; }
+
+.factions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 10px 10px;
+  border-top: 1px solid var(--line-soft);
+}
+.kudo {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 30px; padding: 0 11px;
+  border-radius: var(--r-chip);
+  color: var(--tx-2);
+  font-size: 12px; font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  transition: color 120ms ease, background 120ms ease;
+}
+.kudo:hover { background: var(--ink-2); color: var(--tx-1); }
+.kudo.is-on { color: var(--ember); background: var(--ember-lo); }
+.kudo.is-on .ico { fill: var(--ember); stroke: var(--ember); }
+.factions .spacer { margin-left: auto; }
+.opener { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tx-3); padding: 0 8px; }
+
+.rankup {
+  display: flex; align-items: center; gap: 9px;
+  margin: 0 14px 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(231, 185, 72, 0.12), rgba(231, 185, 72, 0.02));
+  border: 1px solid rgba(231, 185, 72, 0.28);
+}
+.rankup .txt { font-size: 12px; color: var(--tx-2); line-height: 1.4; }
+.rankup .txt b { color: var(--t-gold); font-weight: 750; }
+
+/* ===== detail screens =================================================== */
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--line-soft);
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+}
+.hero-stats .cell { background: var(--ink-0); padding: 13px 14px 12px; }
+.hero-stats .v { font-family: var(--f-display); font-weight: 800; font-size: 21px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.05; }
+.hero-stats .v small { font-size: 11px; color: var(--tx-3); font-weight: 700; margin-left: 2px; letter-spacing: 0; }
+.hero-stats .k { margin-top: 4px; }
+.hero-stats .cell--wide { grid-column: span 3; display: flex; align-items: baseline; gap: 10px; }
+
+.headline {
+  padding: 16px 16px 14px;
+}
+.headline .big { font-family: var(--f-display); font-weight: 800; font-size: 40px; letter-spacing: -0.035em; line-height: 1; font-variant-numeric: tabular-nums; }
+.headline .big small { font-size: 15px; color: var(--tx-3); letter-spacing: 0; margin-left: 3px; }
+.headline h1 { margin: 0 0 3px; font-size: 17px; font-weight: 750; letter-spacing: -0.02em; }
+.headline .meta { font-size: 11.5px; color: var(--tx-3); margin-top: 8px; }
+
+.cardpad { padding: 14px; }
+.card h3 {
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tx-2);
+}
+.card .h3sub { font-size: 11px; color: var(--tx-3); margin-bottom: 13px; line-height: 1.45; }
+
+/* charts */
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart text { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.grid-line { stroke: var(--line-soft); stroke-width: 1; }
+.avg-line { stroke: var(--tx-3); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.75; }
+.bar { fill: var(--engine); transition: fill 120ms ease; }
+.bar:hover, .bar:focus { fill: var(--engine-ink); }
+.ax { fill: var(--tx-3); font-size: 8.5px; letter-spacing: 0.04em; }
+.annot { fill: var(--tx-2); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; }
+.annot--pr { fill: var(--ember); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 12px; }
+.legend .li { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--tx-2); font-variant-numeric: tabular-nums; }
+.legend .sw { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.legend .li .t { color: var(--tx-3); font-family: var(--f-mono); font-size: 10.5px; }
+
+.tip {
+  position: absolute;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -100%);
+  background: #05070A;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 9px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--tx-1);
+  white-space: nowrap;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+  transition: opacity 100ms ease;
+}
+.tip.is-on { opacity: 1; }
+.tip .tk { color: var(--tx-3); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 2px; }
+
+/* PR callout */
+.callout {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 14px;
+  border-radius: var(--r-card);
+  background: linear-gradient(100deg, rgba(255, 74, 36, 0.13), rgba(255, 74, 36, 0.02));
+  border: 1px solid var(--ember-mid);
+}
+.callout .v { font-family: var(--f-display); font-weight: 800; font-size: 26px; letter-spacing: -0.03em; color: var(--ember); font-variant-numeric: tabular-nums; }
+.callout .t { font-size: 12px; color: var(--tx-2); line-height: 1.45; }
+.callout .t b { color: var(--tx-1); font-weight: 700; }
+
+/* ===== strength session ================================================= */
+
+.lift + .lift { border-top: 1px solid var(--line-soft); }
+.lift__head { display: flex; align-items: flex-start; gap: 10px; padding: 14px 14px 10px; }
+.lift__head .nm { font-size: 15px; font-weight: 750; letter-spacing: -0.015em; }
+.lift__head .sub { font-size: 11px; color: var(--tx-3); margin-top: 3px; }
+.lift__head .spark { margin-left: auto; flex: none; }
+
+.sets { display: flex; gap: 6px; padding: 0 14px 12px; flex-wrap: wrap; }
+.set {
+  flex: 1 1 0;
+  min-width: 74px;
+  background: var(--ink-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  padding: 8px 9px;
+}
+.set.is-top { border-color: var(--ember-mid); background: var(--ember-lo); }
+.set .w { font-family: var(--f-display); font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.set .w small { font-size: 10px; color: var(--tx-3); font-weight: 700; letter-spacing: 0; }
+.set .r { font-size: 10.5px; color: var(--tx-3); margin-top: 2px; font-family: var(--f-mono); }
+.set.is-top .r { color: var(--ember); }
+
+.e1rm {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 14px 14px;
+  padding: 10px 12px;
+  background: var(--ink-2);
+  border-radius: 10px;
+}
+.e1rm .v { font-family: var(--f-display); font-weight: 800; font-size: 22px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.e1rm .v small { font-size: 11px; color: var(--tx-3); font-weight: 700; letter-spacing: 0; margin-left: 2px; }
+.e1rm .f { font-family: var(--f-mono); font-size: 10px; color: var(--tx-3); line-height: 1.5; margin-left: auto; text-align: right; }
+
+/* ===== apex profile ===================================================== */
+
+.apexhero {
+  position: relative;
+  padding: 4px 16px 20px;
+  text-align: center;
+  background:
+    radial-gradient(90% 62% at 50% 16%, rgba(231, 185, 72, 0.10), transparent 70%);
+}
+.gaugewrap { position: relative; width: 232px; margin: 0 auto; }
+.gaugewrap svg { display: block; width: 100%; height: auto; overflow: visible; }
+.gaugecore {
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  transform: translateY(-54%);
+  pointer-events: none;
+}
+.gaugecore .score { font-family: var(--f-display); font-weight: 800; font-size: 66px; line-height: 0.94; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; }
+.gaugecore .of { font-size: 11px; color: var(--tx-3); font-family: var(--f-mono); margin-top: 2px; }
+.gaugecore .tiername { margin-top: 7px; font-family: var(--f-display); font-weight: 800; font-size: 15px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--t-gold); }
+
+.cohortline { margin-top: 2px; font-size: 11.5px; color: var(--tx-3); }
+.cohortline b { color: var(--tx-2); font-weight: 650; }
+
+/* components */
+.comp { margin-bottom: 15px; }
+.comp__top { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.swatch { width: 9px; height: 9px; border-radius: 2px; flex: none; display: block; }
+.comp__top .nm { font-size: 12px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; }
+.comp__top .pct { margin-left: auto; font-family: var(--f-display); font-weight: 800; font-size: 17px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.comp__top .pct sup { font-size: 9px; font-weight: 700; letter-spacing: 0.06em; color: var(--tx-3); margin-left: 1px; }
+.track { position: relative; height: 12px; border-radius: 3px; background: var(--ink-3); overflow: hidden; }
+.track .fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 3px; transition: width 900ms cubic-bezier(0.2, 0.8, 0.25, 1); }
+.fill--engine { background: var(--engine); }
+.fill--strength { background: var(--strength); }
+
+.axisline { position: relative; height: 18px; margin-top: 2px; }
+.axisline .tk { position: absolute; top: 0; font-size: 9px; color: var(--tx-3); font-family: var(--f-mono); transform: translateX(-50%); }
+.axisline .tk:first-child { transform: none; }
+.axisline .tk:last-child { transform: translateX(-100%); }
+.marklabel { color: var(--tx-1); }
+
+.scoremark {
+  position: absolute;
+  top: -15px; bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--tx-1);
+  opacity: 0.85;
+  transition: left 900ms cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+.markzone { position: relative; padding: 3px 0 0; }
+.marklabel {
+  position: absolute;
+  top: -20px;
+  transform: translateX(-50%);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--tx-1);
+  transition: left 900ms cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+
+.verdict {
+  margin-top: 14px;
+  padding: 12px 13px;
+  border-radius: 11px;
+  background: var(--ink-2);
+  border-left: 2px solid var(--strength);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--tx-2);
+}
+.verdict b { color: var(--strength-ink); font-weight: 700; }
+.verdict .lead { display: block; color: var(--tx-1); font-weight: 700; margin-bottom: 3px; }
+
+/* ladder */
+.ladder { display: flex; flex-direction: column; }
+.rung {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.rung:last-child { border-bottom: 0; }
+.rung .bead { width: 8px; height: 8px; border-radius: 2px; flex: none; transform: rotate(45deg); }
+.rung .nm { font-family: var(--f-display); font-weight: 800; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; }
+.rung .rg { margin-left: auto; font-family: var(--f-mono); font-size: 10.5px; color: var(--tx-3); font-variant-numeric: tabular-nums; }
+.rung.is-here { background: linear-gradient(90deg, rgba(231, 185, 72, 0.10), transparent); margin: 0 -14px; padding: 8px 14px; border-radius: 6px; }
+.rung.is-here .rg { color: var(--t-gold); }
+.rung .youpill {
+  font-size: 9px; font-weight: 800; letter-spacing: 0.12em;
+  color: var(--ink-0); background: var(--t-gold);
+  padding: 2px 6px; border-radius: 3px;
+}
+.rung.is-dim .nm, .rung.is-dim .bead { opacity: 0.45; }
+
+/* PR list */
+.prlist { display: flex; flex-direction: column; }
+.pr {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.pr:last-child { border-bottom: 0; }
+.pr .ic { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; background: var(--ink-2); flex: none; color: var(--tx-2); }
+.pr .nm { display: block; font-size: 13px; font-weight: 650; }
+.pr .dt { display: block; font-size: 10.5px; color: var(--tx-3); margin-top: 2px; font-family: var(--f-mono); }
+.pr .val { margin-left: auto; text-align: right; }
+.pr .val .v { font-family: var(--f-display); font-weight: 800; font-size: 16px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.pr .val .v small { font-size: 10px; color: var(--tx-3); font-weight: 700; letter-spacing: 0; }
+
+/* volume */
+.vol { display: flex; flex-direction: column; gap: 15px; }
+.vol .row .top { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.vol .row .top .nm { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tx-2); }
+.vol .row .top .v { margin-left: auto; font-family: var(--f-display); font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.vol .row .top .v small { font-size: 10px; color: var(--tx-3); font-weight: 700; letter-spacing: 0; margin-left: 2px; }
+.vol .row .sub { font-size: 10.5px; color: var(--tx-3); margin-top: 5px; font-family: var(--f-mono); }
+
+.footnote {
+  padding: 20px 16px 8px;
+  text-align: center;
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: #59636E;
+  letter-spacing: 0.02em;
+}
+.footnote .tag {
+  display: inline-block;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.18em;
+  color: var(--tx-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  padding: 3px 9px;
+  margin-bottom: 8px;
+}
+
+/* ===== leaderboard ====================================================== */
+
+.seg {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--ink-2);
+  border-radius: 10px;
+  margin: 14px 0 4px;
+}
+.seg button {
+  flex: 1;
+  height: 30px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--tx-3);
+  transition: background 130ms ease, color 130ms ease;
+}
+.seg button.is-on { background: var(--ink-0); color: var(--tx-1); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); }
+
+.board { display: none; }
+.board.is-on { display: block; }
+
+.lb {
+  display: flex; align-items: center; gap: 11px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.lb:last-child { border-bottom: 0; }
+.lb .rk { width: 20px; font-family: var(--f-mono); font-size: 12px; color: var(--tx-3); font-variant-numeric: tabular-nums; text-align: right; flex: none; }
+.lb .nm { display: block; font-size: 13.5px; font-weight: 650; letter-spacing: -0.01em; }
+.lb > span:nth-child(3) { min-width: 0; }
+.sub-title, .sub-sub { display: block; }
+.lift__head .nm, .lift__head .sub { display: block; }
+.e1rm .micro { display: block; margin-bottom: 2px; }
+.lb .meta { font-size: 10.5px; color: var(--tx-3); margin-top: 3px; display: flex; align-items: center; gap: 7px; }
+.lb .sc { margin-left: auto; text-align: right; flex: none; }
+.lb .sc .v { font-family: var(--f-display); font-weight: 800; font-size: 19px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1; }
+.lb .sc .d { font-size: 10px; color: var(--tx-3); font-family: var(--f-mono); margin-top: 3px; }
+.lb .sc .d.up { color: var(--good); }
+.lb--me { background: linear-gradient(90deg, rgba(255, 74, 36, 0.10), transparent 70%); }
+.lb--me .rk { color: var(--ember); }
+
+.bandnote { padding: 11px 14px; font-size: 11px; color: var(--tx-3); line-height: 1.5; border-top: 1px solid var(--line-soft); background: var(--ink-1); }
+
+/* ===== tab bar + FAB ==================================================== */
+
+.tabbar {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 62px;
+  z-index: 8;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  background: rgba(13, 17, 23, 0.94);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--line-soft);
+  padding-bottom: 4px;
+}
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  justify-content: center;
+  color: var(--tx-3);
+  transition: color 130ms ease;
+}
+.tab .lbl { font-size: 9.5px; font-weight: 750; letter-spacing: 0.13em; text-transform: uppercase; }
+.tab:hover { color: var(--tx-2); }
+.tab.is-on { color: var(--ember); }
+
+.fab {
+  position: absolute;
+  right: 16px;
+  bottom: 78px;
+  z-index: 7;
+  height: 46px;
+  padding: 0 17px 0 14px;
+  border-radius: var(--r-chip);
+  background: var(--ember);
+  color: #170602;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 26px rgba(255, 74, 36, 0.3);
+  transition: transform 130ms ease;
+}
+.fab:active { transform: scale(0.96); }
+.fab .ico { stroke-width: 2.4; }
+
+/* ===== sheet ============================================================ */
+
+.scrim {
+  position: absolute; inset: 0; z-index: 20;
+  background: rgba(4, 6, 9, 0.7);
+  opacity: 0; pointer-events: none;
+  transition: opacity 180ms ease;
+}
+.scrim.is-on { opacity: 1; pointer-events: auto; }
+
+.sheet {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 21;
+  background: var(--ink-1);
+  border-top: 1px solid var(--line);
+  border-radius: 20px 20px 0 0;
+  padding: 10px 16px 22px;
+  transform: translateY(102%);
+  transition: transform 240ms cubic-bezier(0.22, 0.9, 0.3, 1);
+}
+.sheet.is-on { transform: none; }
+.sheet .grab { width: 34px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 14px; }
+.sheet h3 { margin: 0 0 12px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tx-2); font-weight: 750; }
+.sports { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.sport {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 12px;
+  border-radius: 11px;
+  background: var(--ink-2);
+  border: 1px solid var(--line-soft);
+  font-size: 13px;
+  font-weight: 650;
+}
+.sport:hover { border-color: var(--line); }
+.sport .ico { color: var(--engine-ink); }
+.sport.is-iron .ico { color: var(--strength-ink); }
+.sheet .disclaim { margin-top: 14px; font-size: 11px; color: var(--tx-3); text-align: center; line-height: 1.5; }
+
+/* ===== motion =========================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  .screen--sub.is-active { animation: none; }
+}
+</style>
+
+<div class="stage">
+  <p class="frame-note"><b>Apex Fitness</b><br>Clickable MVP walkthrough. Tap a feed card to open its detail; the Apex tab is the flagship screen. All data is fictional.</p>
+
+  <div class="phone">
+    <div class="app" id="app">
+
+      <!-- ================= FEED ================= -->
+      <section class="screen is-active" id="s-feed" aria-label="Feed">
+        <header class="topbar">
+          <div class="topbar__row">
+            <div class="brand">
+              <svg class="ico mark" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width:2.3">
+                <polyline points="3,19 9.5,7 13.5,13.5 16,9.5 21,19"></polyline>
+              </svg>
+              APEX
+            </div>
+            <span class="demo-pill">DEMO</span>
+          </div>
+          <div class="loadstrip">
+            <div class="cell">
+              <span class="v" style="color:var(--good)">&minus;9</span>
+              <span class="micro">Form &middot; TSB</span>
+            </div>
+            <div class="cell">
+              <span class="v">71</span>
+              <span class="micro">Fatigue &middot; ATL</span>
+            </div>
+            <div class="cell">
+              <span class="v">62</span>
+              <span class="micro">Fitness &middot; CTL</span>
+            </div>
+            <div class="state"><span class="dot"></span>Productive</div>
+          </div>
+        </header>
+
+        <div class="feed">
+
+          <!-- run -->
+          <div class="card fcard fcard--tap" data-open="s-run" role="button" tabindex="0">
+            <div class="fhead">
+              <span class="avatar avatar--me">MC</span>
+              <span>
+                <span class="who">Maya Chen</span>
+                <span class="when">
+                  <svg class="sportmark" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round">
+                    <circle cx="16" cy="5" r="2"></circle>
+                    <polyline points="6,20 10,15.5 8.5,11.5 13,9 16,12 19.5,13"></polyline>
+                    <polyline points="10,15.5 13.5,17 12.5,21"></polyline>
+                  </svg>
+                  Run &middot; Today, 6:12 AM &middot; Oakland Hills
+                </span>
+              </span>
+            </div>
+            <div class="ftitle">Skyline Loop &mdash; long tempo</div>
+            <div class="statrow">
+              <div class="s"><div class="v">12.4<small>km</small></div><div class="k micro">Distance</div></div>
+              <div class="s"><div class="v">4:44<small>/km</small></div><div class="k micro">Avg pace</div></div>
+              <div class="s"><div class="v">58:47</div><div class="k micro">Moving</div></div>
+            </div>
+            <div class="note">
+              <b>GAP 4:38/km</b> &mdash; 6 s/km faster than raw once 186 m of climb is levelled out. Avg HR 152.
+            </div>
+            <div class="routebox" id="feed-route"></div>
+            <div class="factions">
+              <span class="kudo" role="button" tabindex="0" data-kudo="24">
+                <svg class="ico" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20C4.5 14.4 4 9.2 7.6 7.4c2.2-1.1 3.9.4 4.4 1.3.5-.9 2.2-2.4 4.4-1.3C20 9.2 19.5 14.4 12 20z"></path>
+                </svg>
+                <span class="n">24</span>
+              </span>
+              <span class="kudo">
+                <svg class="ico" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M20 12.5c0 3.6-3.6 6.5-8 6.5-1 0-2-.15-2.9-.42L4 20.5l1.5-3.5C4.3 15.8 4 14.2 4 12.5 4 8.9 7.6 6 12 6s8 2.9 8 6.5z"></path>
+                </svg>
+                <span class="n">3</span>
+              </span>
+              <span class="spacer"></span>
+              <span class="opener">Open</span>
+            </div>
+          </div>
+
+          <!-- friend: strength -->
+          <div class="card fcard fcard--tap" data-open="s-lift-dev" role="button" tabindex="0">
+            <div class="fhead">
+              <span class="avatar">DR</span>
+              <span>
+                <span class="who">Dev Ramanathan</span>
+                <span class="when">
+                  <svg class="sportmark" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round">
+                    <line x1="6" y1="12" x2="18" y2="12"></line>
+                    <rect x="2.5" y="8" width="3.5" height="8" rx="1.2"></rect>
+                    <rect x="18" y="8" width="3.5" height="8" rx="1.2"></rect>
+                  </svg>
+                  Strength &middot; 3h ago &middot; Iron District
+                </span>
+              </span>
+            </div>
+            <div class="ftitle">Squat Day &mdash; Wave 3, top single triple</div>
+            <div class="statrow">
+              <div class="s"><div class="v">165<small>kg</small></div><div class="k micro">Top set &times;3</div></div>
+              <div class="s"><div class="v">181.5<small>kg</small></div><div class="k micro">e1RM</div></div>
+              <div class="s"><div class="v">7.1<small>t</small></div><div class="k micro">Tonnage</div></div>
+            </div>
+            <div class="rankup">
+              <svg class="ico" width="19" height="19" viewBox="0 0 24 24" aria-hidden="true" style="color:var(--t-gold);stroke-width:2">
+                <polyline points="5,15 12,8 19,15"></polyline>
+                <line x1="5" y1="19" x2="19" y2="19"></line>
+              </svg>
+              <span class="txt">Rank up &mdash; <b>Silver &rarr; Gold</b> on Back Squat<br>80th percentile &middot; M 80&ndash;89 kg &middot; 25&ndash;34</span>
+            </div>
+            <div class="factions">
+              <span class="kudo" role="button" tabindex="0" data-kudo="41">
+                <svg class="ico" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20C4.5 14.4 4 9.2 7.6 7.4c2.2-1.1 3.9.4 4.4 1.3.5-.9 2.2-2.4 4.4-1.3C20 9.2 19.5 14.4 12 20z"></path>
+                </svg>
+                <span class="n">41</span>
+              </span>
+              <span class="kudo">
+                <svg class="ico" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M20 12.5c0 3.6-3.6 6.5-8 6.5-1 0-2-.15-2.9-.42L4 20.5l1.5-3.5C4.3 15.8 4 14.2 4 12.5 4 8.9 7.6 6 12 6s8 2.9 8 6.5z"></path>
+                </svg>
+                <span class="n">9</span>
+              </span>
+              <span class="spacer"></span>
+              <span class="opener">Open</span>
+            </div>
+          </div>
+
+          <!-- swim -->
+          <div class="card fcard">
+            <div class="fhead">
+              <span class="avatar avatar--me">MC</span>
+              <span>
+                <span class="who">Maya Chen</span>
+                <span class="when">
+                  <svg class="sportmark" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round">
+                    <circle cx="17" cy="6.5" r="1.8"></circle>
+                    <polyline points="3,9.5 7,7.5 11,9.5 14.5,7.5"></polyline>
+                    <polyline points="3,14 7,12 11,14 15,12 19,14"></polyline>
+                    <polyline points="3,18.5 7,16.5 11,18.5 15,16.5 19,18.5"></polyline>
+                  </svg>
+                  Swim &middot; Yesterday, 7:05 PM &middot; Masters
+                </span>
+              </span>
+            </div>
+            <div class="ftitle">Threshold 8 &times; 200 m</div>
+            <div class="statrow">
+              <div class="s"><div class="v">2,000<small>m</small></div><div class="k micro">Distance</div></div>
+              <div class="s"><div class="v">1:55<small>/100</small></div><div class="k micro">Avg pace</div></div>
+              <div class="s"><div class="v">41</div><div class="k micro">SWOLF</div></div>
+            </div>
+            <div class="note">
+              <b>SWOLF 41</b> (down from 43 last week) &mdash; same 100 m split at two fewer strokes per length. Efficiency, not effort.
+            </div>
+            <div class="factions">
+              <span class="kudo" role="button" tabindex="0" data-kudo="12">
+                <svg class="ico" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20C4.5 14.4 4 9.2 7.6 7.4c2.2-1.1 3.9.4 4.4 1.3.5-.9 2.2-2.4 4.4-1.3C20 9.2 19.5 14.4 12 20z"></path>
+                </svg>
+                <span class="n">12</span>
+              </span>
+              <span class="kudo">
+                <svg class="ico" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M20 12.5c0 3.6-3.6 6.5-8 6.5-1 0-2-.15-2.9-.42L4 20.5l1.5-3.5C4.3 15.8 4 14.2 4 12.5 4 8.9 7.6 6 12 6s8 2.9 8 6.5z"></path>
+                </svg>
+                <span class="n">1</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- ride -->
+          <div class="card fcard">
+            <div class="fhead">
+              <span class="avatar">PA</span>
+              <span>
+                <span class="who">Priya Anand</span>
+                <span class="when">
+                  <svg class="sportmark" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round">
+                    <circle cx="5.5" cy="17" r="3.6"></circle>
+                    <circle cx="18.5" cy="17" r="3.6"></circle>
+                    <polyline points="5.5,17 9.5,9 15,9 18.5,17"></polyline>
+                    <line x1="9.5" y1="9" x2="12.5" y2="17"></line>
+                  </svg>
+                  Ride &middot; Yesterday, 5:40 PM &middot; Marin
+                </span>
+              </span>
+            </div>
+            <div class="ftitle">Paradise Loop, chasing the light</div>
+            <div class="statrow">
+              <div class="s"><div class="v">41.2<small>km</small></div><div class="k micro">Distance</div></div>
+              <div class="s"><div class="v">30.1<small>km/h</small></div><div class="k micro">Avg speed</div></div>
+              <div class="s"><div class="v">312<small>m</small></div><div class="k micro">Elevation</div></div>
+            </div>
+            <div class="factions">
+              <span class="kudo" role="button" tabindex="0" data-kudo="18">
+                <svg class="ico" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20C4.5 14.4 4 9.2 7.6 7.4c2.2-1.1 3.9.4 4.4 1.3.5-.9 2.2-2.4 4.4-1.3C20 9.2 19.5 14.4 12 20z"></path>
+                </svg>
+                <span class="n">18</span>
+              </span>
+              <span class="kudo">
+                <svg class="ico" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M20 12.5c0 3.6-3.6 6.5-8 6.5-1 0-2-.15-2.9-.42L4 20.5l1.5-3.5C4.3 15.8 4 14.2 4 12.5 4 8.9 7.6 6 12 6s8 2.9 8 6.5z"></path>
+                </svg>
+                <span class="n">2</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- own strength session -->
+          <div class="card fcard fcard--tap" data-open="s-lift" role="button" tabindex="0">
+            <div class="fhead">
+              <span class="avatar avatar--me">MC</span>
+              <span>
+                <span class="who">Maya Chen</span>
+                <span class="when">
+                  <svg class="sportmark" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round">
+                    <line x1="6" y1="12" x2="18" y2="12"></line>
+                    <rect x="2.5" y="8" width="3.5" height="8" rx="1.2"></rect>
+                    <rect x="18" y="8" width="3.5" height="8" rx="1.2"></rect>
+                  </svg>
+                  Strength &middot; Tue, 6:40 PM &middot; Fort Point Barbell
+                </span>
+              </span>
+            </div>
+            <div class="ftitle">Lower Power &mdash; Week 6, Day 2</div>
+            <div class="statrow">
+              <div class="s"><div class="v">3,565<small>kg</small></div><div class="k micro">Tonnage</div></div>
+              <div class="s"><div class="v">9</div><div class="k micro">Work sets</div></div>
+              <div class="s"><div class="v">104.8<small>kg</small></div><div class="k micro">Squat e1RM</div></div>
+            </div>
+            <div class="note note--iron">
+              <b>Squat e1RM +1.8 kg</b> on the block &mdash; 78th percentile in your cohort. Bench is now the lift holding your Apex Score back.
+            </div>
+            <div class="factions">
+              <span class="kudo" role="button" tabindex="0" data-kudo="16">
+                <svg class="ico" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20C4.5 14.4 4 9.2 7.6 7.4c2.2-1.1 3.9.4 4.4 1.3.5-.9 2.2-2.4 4.4-1.3C20 9.2 19.5 14.4 12 20z"></path>
+                </svg>
+                <span class="n">16</span>
+              </span>
+              <span class="spacer"></span>
+              <span class="opener">Open</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= APEX PROFILE ================= -->
+      <section class="screen" id="s-apex" aria-label="Apex Score">
+        <header class="topbar">
+          <div class="topbar__row">
+            <span class="avatar avatar--me">MC</span>
+            <span>
+              <span class="sub-title">Maya Chen</span>
+              <span class="sub-sub">29 &middot; 63.2 kg &middot; Oakland, CA</span>
+            </span>
+            <span class="demo-pill">DEMO</span>
+          </div>
+        </header>
+
+        <div class="apexhero">
+          <div class="gaugewrap">
+            <svg id="gauge" viewBox="0 0 232 202" role="img" aria-label="Apex Score 73 of 100, Gold tier"></svg>
+            <div class="gaugecore">
+              <div class="score" id="gauge-num">73</div>
+              <div class="of">APEX SCORE / 100</div>
+              <div class="tiername">Gold</div>
+            </div>
+          </div>
+          <p class="cohortline">Top <b>12%</b> of 4,318 athletes in <b>F &middot; 60&ndash;67 kg &middot; 25&ndash;34</b></p>
+        </div>
+
+        <div class="wrap">
+
+          <div class="card">
+            <div class="cardpad">
+              <h3>The two axes</h3>
+              <p class="h3sub">Both are cohort percentiles on one shared 0&ndash;100 scale. Your Apex Score is not their average &mdash; it is weighted 65/35 toward the weaker axis.</p>
+
+              <div class="comp">
+                <div class="comp__top">
+                  <span class="swatch" style="background:var(--engine)"></span>
+                  <span class="nm">Engine</span>
+                  <span class="pct" id="pct-engine">81<sup>ST</sup></span>
+                </div>
+                <div class="track"><span class="fill fill--engine" id="fill-engine"></span></div>
+              </div>
+
+              <div class="comp">
+                <div class="comp__top">
+                  <span class="swatch" style="background:var(--strength)"></span>
+                  <span class="nm">Strength</span>
+                  <span class="pct" id="pct-strength">68<sup>TH</sup></span>
+                </div>
+                <div class="track"><span class="fill fill--strength" id="fill-strength"></span></div>
+              </div>
+
+              <div class="markzone">
+                <div class="marklabel" id="marklabel" style="left:0">Apex 73</div>
+                <div class="track" style="height:6px;background:transparent;overflow:visible">
+                  <span class="scoremark" id="scoremark" style="left:0"></span>
+                </div>
+                <div class="axisline">
+                  <span class="tk" style="left:0%">0</span>
+                  <span class="tk" style="left:50%">50th</span>
+                  <span class="tk" style="left:100%">100</span>
+                </div>
+              </div>
+
+              <div class="verdict">
+                <span class="lead">Your strength is holding your score.</span>
+                A straight average of 81 and 68 would be 74.5. Because Apex leans on your weaker axis you sit at <b>73</b> &mdash; and Platinum opens at 75. Add <b>+4 strength percentile</b> (roughly <b>3 more quality squat sessions</b>) and the score clears the band. Adding engine alone moves it 0.35 pts per percentile.
+              </div>
+
+              <div class="verdict" style="border-left-color:var(--engine);margin-top:10px">
+                <span class="lead">Freshness decay</span>
+                Engine drops <b style="color:var(--engine-ink)">1 pt every 9 days</b> without a logged endurance session; strength decays at a third of that rate. Last run: <b style="color:var(--engine-ink)">today</b>.
+              </div>
+            </div>
+          </div>
+
+          <div class="sec-head"><h2>Rank ladder</h2><span class="aside">Apex Score bands</span></div>
+          <div class="card">
+            <div class="cardpad">
+              <div class="ladder" id="ladder"></div>
+            </div>
+          </div>
+
+          <div class="sec-head"><h2>Weekly volume</h2><span class="aside">7 days to Aug 2</span></div>
+          <div class="card">
+            <div class="cardpad">
+              <div class="vol">
+                <div class="row">
+                  <div class="top">
+                    <span class="nm" style="color:var(--engine-ink)">Cardio</span>
+                    <span class="v">4:52<small>hh:mm</small></span>
+                  </div>
+                  <div class="track"><span class="fill fill--engine" style="width:81%"></span></div>
+                  <div class="sub">5 sessions &middot; 2 run &middot; 1 ride &middot; 1 swim &middot; 1 long run &middot; 62 km</div>
+                </div>
+                <div class="row">
+                  <div class="top">
+                    <span class="nm" style="color:var(--strength-ink)">Lift tonnage</span>
+                    <span class="v">11.2<small>t</small></span>
+                  </div>
+                  <div class="track"><span class="fill fill--strength" style="width:64%"></span></div>
+                  <div class="sub">3 sessions &middot; 27 work sets &middot; avg intensity 78% e1RM</div>
+                </div>
+              </div>
+              <p class="h3sub" style="margin:14px 0 0">Bars are each scaled to your own 12-week ceiling, not to each other &mdash; hours and tonnes do not share an axis.</p>
+            </div>
+          </div>
+
+          <div class="sec-head"><h2>Recent PRs</h2><span class="aside">2026 season</span></div>
+          <div class="card">
+            <div class="cardpad">
+              <div class="prlist">
+                <div class="pr">
+                  <span class="ic"><svg class="ico" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><circle cx="16" cy="5" r="2"></circle><polyline points="6,20 10,15.5 8.5,11.5 13,9 16,12 19.5,13"></polyline></svg></span>
+                  <span><span class="nm">5 km</span><span class="dt">12 Apr 2026</span></span>
+                  <span class="val"><span class="v">21:04</span></span>
+                </div>
+                <div class="pr">
+                  <span class="ic"><svg class="ico" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><circle cx="16" cy="5" r="2"></circle><polyline points="6,20 10,15.5 8.5,11.5 13,9 16,12 19.5,13"></polyline></svg></span>
+                  <span><span class="nm">10 km</span><span class="dt">01 Mar 2026</span></span>
+                  <span class="val"><span class="v">43:58</span></span>
+                </div>
+                <div class="pr">
+                  <span class="ic"><svg class="ico" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><circle cx="16" cy="5" r="2"></circle><polyline points="6,20 10,15.5 8.5,11.5 13,9 16,12 19.5,13"></polyline></svg></span>
+                  <span><span class="nm">Half marathon</span><span class="dt">08 Feb 2026</span></span>
+                  <span class="val"><span class="v">1:38:12</span></span>
+                </div>
+                <div class="pr">
+                  <span class="ic"><svg class="ico" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="12" x2="18" y2="12"></line><rect x="2.5" y="8" width="3.5" height="8" rx="1.2"></rect><rect x="18" y="8" width="3.5" height="8" rx="1.2"></rect></svg></span>
+                  <span><span class="nm">Back Squat e1RM</span><span class="dt">Today</span></span>
+                  <span class="val"><span class="v">104.8<small> kg</small></span></span>
+                </div>
+                <div class="pr">
+                  <span class="ic"><svg class="ico" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="12" x2="18" y2="12"></line><rect x="2.5" y="8" width="3.5" height="8" rx="1.2"></rect><rect x="18" y="8" width="3.5" height="8" rx="1.2"></rect></svg></span>
+                  <span><span class="nm">Deadlift 1RM</span><span class="dt">20 Jun 2026</span></span>
+                  <span class="val"><span class="v">132.5<small> kg</small></span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="footnote">
+            <span class="tag">DEMO &mdash; MOCK DATA</span><br>
+            Every athlete, activity, percentile and rank on this build is fictional and generated for design review. Nothing here reflects a real person, a shipped feature, or a validated scoring model.
+          </p>
+        </div>
+      </section>
+
+      <!-- ================= LEADERBOARD ================= -->
+      <section class="screen" id="s-board" aria-label="Leaderboards">
+        <header class="topbar">
+          <div class="topbar__row">
+            <span class="sub-title">Leaderboards</span>
+            <span class="demo-pill">DEMO</span>
+          </div>
+        </header>
+
+        <div class="wrap">
+          <div class="seg" role="tablist" aria-label="Leaderboard scope">
+            <button type="button" class="is-on" data-board="b-cohort" role="tab" aria-selected="true">Cohort</button>
+            <button type="button" data-board="b-friends" role="tab" aria-selected="false">Friends</button>
+          </div>
+
+          <div class="board is-on" id="b-cohort">
+            <div class="sec-head"><h2>F &middot; 60&ndash;67 kg &middot; 25&ndash;34</h2><span class="aside">Bay Area &middot; 4,318</span></div>
+            <div class="card" id="lb-cohort"></div>
+            <p class="h3sub" style="margin:12px 2px 0">Cohorts are sex &times; bodyweight &times; age. You are never ranked against a body you do not have.</p>
+          </div>
+
+          <div class="board" id="b-friends">
+            <div class="sec-head"><h2>Friends</h2><span class="aside">7 following</span></div>
+            <div class="card" id="lb-friends"></div>
+            <p class="h3sub" style="margin:12px 2px 0">Friends span four cohorts &mdash; percentile normalisation is what makes the comparison legitimate.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= RUN DETAIL ================= -->
+      <section class="screen screen--sub" id="s-run" aria-label="Run detail">
+        <header class="topbar">
+          <div class="topbar__row">
+            <button class="backbtn" type="button" data-back>
+              <svg class="ico" width="19" height="19" viewBox="0 0 24 24" aria-hidden="true"><polyline points="14.5,5 8,12 14.5,19"></polyline></svg>
+              Feed
+            </button>
+            <span>
+              <span class="sub-title">Skyline Loop</span>
+              <span class="sub-sub">Today, 6:12 AM</span>
+            </span>
+          </div>
+        </header>
+
+        <div class="routebox" id="detail-route"></div>
+
+        <div class="headline">
+          <h1>Skyline Loop &mdash; long tempo</h1>
+          <div class="big">12.4<small>km</small></div>
+          <p class="meta">Oakland Hills &middot; 12&deg;C, light fog &middot; Shoes: Endorphin Speed 4 (612 km)</p>
+        </div>
+
+        <div class="hero-stats">
+          <div class="cell"><div class="v">58:47</div><div class="k micro">Moving time</div></div>
+          <div class="cell"><div class="v">4:44<small>/km</small></div><div class="k micro">Avg pace</div></div>
+          <div class="cell"><div class="v" style="color:var(--engine-ink)">4:38<small>/km</small></div><div class="k micro">GAP</div></div>
+          <div class="cell"><div class="v">186<small>m</small></div><div class="k micro">Elev gain</div></div>
+          <div class="cell"><div class="v">152<small>bpm</small></div><div class="k micro">Avg HR</div></div>
+          <div class="cell"><div class="v">174<small>bpm</small></div><div class="k micro">Max HR</div></div>
+          <div class="cell"><div class="v">812</div><div class="k micro">Calories</div></div>
+          <div class="cell"><div class="v">178<small>spm</small></div><div class="k micro">Cadence</div></div>
+          <div class="cell"><div class="v">74</div><div class="k micro">Load</div></div>
+        </div>
+
+        <div class="wrap" style="padding-top:16px">
+
+          <div class="callout">
+            <span class="v">22:47</span>
+            <span class="t"><b>PR &mdash; fastest 5 km inside a run this year.</b> Rolling window km 7.4 &rarr; 12.4, taken on the descent. Standalone 5 km best stays 21:04.</span>
+          </div>
+
+          <div class="sec-head"><h2>Splits</h2><span class="aside">per kilometre</span></div>
+          <div class="card">
+            <div class="cardpad">
+              <h3>Pace by kilometre</h3>
+              <p class="h3sub">Bar length is speed &mdash; longer is faster. Dashed line is the 4:44 average.</p>
+              <div id="splits"></div>
+            </div>
+          </div>
+
+          <div class="sec-head"><h2>Heart rate</h2><span class="aside">58:47 in zone</span></div>
+          <div class="card">
+            <div class="cardpad">
+              <h3>Zone distribution</h3>
+              <p class="h3sub">Threshold-anchored zones, LTHR 168.</p>
+              <div id="zones"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardpad">
+              <h3>Privacy</h3>
+              <p class="h3sub" style="margin-bottom:0">The first and last 340 m of this route are hidden by your home privacy zone &mdash; on by default. Distance and pace are unaffected; the trace simply starts outside the radius.</p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= STRENGTH DETAIL (Maya) ================= -->
+      <section class="screen screen--sub" id="s-lift" aria-label="Strength session detail">
+        <header class="topbar">
+          <div class="topbar__row">
+            <button class="backbtn" type="button" data-back>
+              <svg class="ico" width="19" height="19" viewBox="0 0 24 24" aria-hidden="true"><polyline points="14.5,5 8,12 14.5,19"></polyline></svg>
+              Feed
+            </button>
+            <span>
+              <span class="sub-title">Lower Power &mdash; Wk 6 D2</span>
+              <span class="sub-sub">Tue, 6:40 PM &middot; Fort Point Barbell</span>
+            </span>
+          </div>
+        </header>
+
+        <div class="headline">
+          <h1>Lower Power &mdash; Week 6, Day 2</h1>
+          <div class="big">3,565<small>kg</small></div>
+          <p class="meta">Tonnage across 9 work sets &middot; 47 min &middot; Load 62 &middot; RPE 8.5 avg</p>
+        </div>
+
+        <div class="hero-stats">
+          <div class="cell"><div class="v">47<small>min</small></div><div class="k micro">Duration</div></div>
+          <div class="cell"><div class="v">9</div><div class="k micro">Work sets</div></div>
+          <div class="cell"><div class="v">78<small>%</small></div><div class="k micro">Avg intensity</div></div>
+        </div>
+
+        <div class="wrap" style="padding-top:16px">
+          <div class="sec-head"><h2>Lifts</h2><span class="aside">e1RM = w &times; (1 + r/30)</span></div>
+
+          <div class="card" id="lifts"></div>
+
+          <div class="sec-head"><h2>Cohort</h2><span class="aside">F &middot; 60&ndash;67 kg &middot; 25&ndash;34</span></div>
+          <div class="card">
+            <div class="cardpad">
+              <h3>Strength composite</h3>
+              <p class="h3sub">Core lifts only. Composite = 0.7 &times; mean + 0.3 &times; weakest, so one lagging lift is felt rather than averaged away.</p>
+              <div class="comp" style="margin-bottom:6px">
+                <div class="comp__top">
+                  <span class="nm" style="color:var(--strength-ink)">Composite</span>
+                  <span class="pct">68<sup>TH</sup></span>
+                </div>
+                <div class="track"><span class="fill fill--strength" style="width:68%"></span></div>
+              </div>
+              <p class="h3sub" style="margin:12px 0 0">Squat 78 &middot; Deadlift 72 &middot; Bench 61 &nbsp;&rarr;&nbsp; mean 70.3, weakest 61 &nbsp;&rarr;&nbsp; <b style="color:var(--tx-1)">68</b>. Sets above 10 reps are logged but never rank-eligible.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= STRENGTH DETAIL (Dev) ================= -->
+      <section class="screen screen--sub" id="s-lift-dev" aria-label="Dev's squat session">
+        <header class="topbar">
+          <div class="topbar__row">
+            <button class="backbtn" type="button" data-back>
+              <svg class="ico" width="19" height="19" viewBox="0 0 24 24" aria-hidden="true"><polyline points="14.5,5 8,12 14.5,19"></polyline></svg>
+              Feed
+            </button>
+            <span>
+              <span class="sub-title">Squat Day &mdash; Wave 3</span>
+              <span class="sub-sub">Dev Ramanathan &middot; 3h ago</span>
+            </span>
+          </div>
+        </header>
+
+        <div class="headline">
+          <h1>Squat Day &mdash; Wave 3</h1>
+          <div class="big">181.5<small>kg</small></div>
+          <p class="meta">Back Squat e1RM from 165 kg &times; 3 &middot; M &middot; 84.1 kg &middot; 31</p>
+        </div>
+
+        <div class="hero-stats">
+          <div class="cell"><div class="v">7.1<small>t</small></div><div class="k micro">Tonnage</div></div>
+          <div class="cell"><div class="v">14</div><div class="k micro">Work sets</div></div>
+          <div class="cell"><div class="v">64<small>min</small></div><div class="k micro">Duration</div></div>
+        </div>
+
+        <div class="wrap" style="padding-top:16px">
+          <div class="callout" style="background:linear-gradient(100deg, rgba(231,185,72,0.13), rgba(231,185,72,0.02));border-color:rgba(231,185,72,0.32)">
+            <span class="v" style="color:var(--t-gold)">80<span style="font-size:13px">th</span></span>
+            <span class="t"><b style="color:var(--t-gold)">Silver &rarr; Gold on Back Squat.</b> Crossed the 80th percentile of M &middot; 80&ndash;89 kg &middot; 25&ndash;34. Ranks move only on logged lifts &mdash; nothing here is purchasable.</span>
+          </div>
+
+          <div class="sec-head"><h2>Back Squat</h2><span class="aside">top set &times; 3</span></div>
+          <div class="card" id="lifts-dev"></div>
+        </div>
+      </section>
+
+      <!-- ================= CHROME ================= -->
+      <button class="fab" id="fab" type="button" aria-haspopup="dialog">
+        <svg class="ico" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Record
+      </button>
+
+      <nav class="tabbar" aria-label="Primary">
+        <button class="tab is-on" type="button" data-tab="s-feed" aria-current="page">
+          <svg class="ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3.5" y="4.5" width="17" height="6" rx="2"></rect>
+            <rect x="3.5" y="13.5" width="17" height="6" rx="2"></rect>
+          </svg>
+          <span class="lbl">Feed</span>
+        </button>
+        <button class="tab" type="button" data-tab="s-apex">
+          <svg class="ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+            <polyline points="3,19 9.5,7 13.5,13.5 16,9.5 21,19"></polyline>
+          </svg>
+          <span class="lbl">Apex</span>
+        </button>
+        <button class="tab" type="button" data-tab="s-board">
+          <svg class="ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3.5" y="13" width="4.5" height="7" rx="1.4"></rect>
+            <rect x="9.8" y="8" width="4.5" height="12" rx="1.4"></rect>
+            <rect x="16" y="4" width="4.5" height="16" rx="1.4"></rect>
+          </svg>
+          <span class="lbl">Board</span>
+        </button>
+      </nav>
+
+      <div class="scrim" id="scrim"></div>
+      <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Start a session">
+        <div class="grab"></div>
+        <h3>Start a session</h3>
+        <div class="sports">
+          <button class="sport" type="button">
+            <svg class="ico" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="16" cy="5" r="2"></circle><polyline points="6,20 10,15.5 8.5,11.5 13,9 16,12 19.5,13"></polyline></svg>
+            Run
+          </button>
+          <button class="sport" type="button">
+            <svg class="ico" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="17" r="3.6"></circle><circle cx="18.5" cy="17" r="3.6"></circle><polyline points="5.5,17 9.5,9 15,9 18.5,17"></polyline></svg>
+            Ride
+          </button>
+          <button class="sport" type="button">
+            <svg class="ico" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="17" cy="6.5" r="1.8"></circle><polyline points="3,13 7,11 11,13 15,11 19,13"></polyline><polyline points="3,18 7,16 11,18 15,16 19,18"></polyline></svg>
+            Swim
+          </button>
+          <button class="sport is-iron" type="button">
+            <svg class="ico" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="12" x2="18" y2="12"></line><rect x="2.5" y="8" width="3.5" height="8" rx="1.2"></rect><rect x="18" y="8" width="3.5" height="8" rx="1.2"></rect></svg>
+            Lift
+          </button>
+        </div>
+        <p class="disclaim">Recording is not wired up in this demo &mdash; the flagship screens are Feed, Apex and Board.</p>
+      </div>
+
+      <div class="tip" id="tip" role="status" aria-live="polite"></div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var app = document.getElementById("app");
+
+  /* SVG presentation attributes do not resolve custom properties reliably, so
+     any value carrying a var() is routed into an inline style declaration. */
+  var STYLEABLE = { fill: 1, stroke: 1, opacity: 1, "font-family": 1, "stroke-width": 1 };
+
+  function el(name, attrs, parent) {
+    var n = document.createElementNS(SVGNS, name);
+    var style = "";
+    if (attrs) {
+      for (var k in attrs) {
+        if (attrs[k] === null || attrs[k] === undefined) { continue; }
+        var v = String(attrs[k]);
+        if (STYLEABLE[k] && v.indexOf("var(") !== -1) { style += k + ":" + v + ";"; }
+        else { n.setAttribute(k, v); }
+      }
+    }
+    if (style) { n.setAttribute("style", style); }
+    if (parent) { parent.appendChild(n); }
+    return n;
+  }
+  function svg(w, h, parent, cls) {
+    var s = el("svg", { viewBox: "0 0 " + w + " " + h, "class": cls || "chart", width: "100%",
+      preserveAspectRatio: "xMidYMid meet" }, parent);
+    return s;
+  }
+  function mmss(sec) {
+    var m = Math.floor(sec / 60), s = Math.round(sec % 60);
+    if (s === 60) { m += 1; s = 0; }
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  /* ---------------------------------------------------------------- data */
+
+  var ROUTE = [
+    24,148, 30,140, 38,136, 44,128, 52,126, 60,118, 66,106, 72,98, 82,94, 92,96,
+    100,90, 108,78, 114,66, 124,58, 136,56, 146,50, 158,46, 170,48, 182,44, 194,38,
+    206,40, 216,34, 228,36, 238,30, 250,34, 262,30, 274,38, 282,48, 288,60, 292,74,
+    288,86, 282,96, 272,102, 262,100, 250,104, 240,112, 232,122, 222,130, 210,134,
+    198,130, 188,136, 176,142, 164,140, 152,146, 140,150, 128,152, 116,148, 104,152,
+    92,156, 80,152, 68,156, 56,152, 44,156, 32,152, 24,148
+  ];
+
+  /* per-km splits, seconds per km. Sum = 3410 s + 103 s (final 0.4 km) = 58:47 */
+  var SPLITS = [
+    { km: "1", sec: 302, el: 12 }, { km: "2", sec: 293, el: 18 }, { km: "3", sec: 288, el: 9 },
+    { km: "4", sec: 279, el: -6 }, { km: "5", sec: 284, el: 14 }, { km: "6", sec: 309, el: 48 },
+    { km: "7", sec: 295, el: 31 }, { km: "8", sec: 276, el: -11 }, { km: "9", sec: 275, el: -14 },
+    { km: "10", sec: 275, el: 4 }, { km: "11", sec: 284, el: 21 }, { km: "12", sec: 264, el: -26 },
+    { km: "12.4", sec: 258, el: -9, partial: true }
+  ];
+
+  var ZONES = [
+    { z: "Z1", name: "Recovery", bpm: "< 137", pct: 2, sec: 70, color: "var(--z1)" },
+    { z: "Z2", name: "Aerobic", bpm: "137\u2013151", pct: 18, sec: 635, color: "var(--z2)" },
+    { z: "Z3", name: "Tempo", bpm: "152\u2013161", pct: 46, sec: 1622, color: "var(--z3)" },
+    { z: "Z4", name: "Threshold", bpm: "162\u2013172", pct: 28, sec: 988, color: "var(--z4)" },
+    { z: "Z5", name: "VO\u2082max", bpm: "> 172", pct: 6, sec: 212, color: "var(--z5)" }
+  ];
+
+  var LIFTS = [
+    {
+      name: "Back Squat", note: "Belt, no wraps \u00B7 RPE 8.5",
+      sets: [ { w: 60, r: 5, warm: true }, { w: 80, r: 3 }, { w: 92.5, r: 4, top: true } ],
+      e1rm: "104.8", formula: "92.5 \u00D7 (1 + 4/30)",
+      tier: "gold", tierName: "Gold", pct: "78th",
+      spark: [96, 97, 99, 98, 101, 102, 103, 104.8]
+    },
+    {
+      name: "Bench Press", note: "Competition grip \u00B7 RPE 9",
+      sets: [ { w: 45, r: 5, warm: true }, { w: 52.5, r: 5 }, { w: 57.5, r: 5, top: true } ],
+      e1rm: "67.1", formula: "57.5 \u00D7 (1 + 5/30)",
+      tier: "silver", tierName: "Silver", pct: "61st",
+      spark: [62, 63, 63, 64, 65, 65, 66, 67.1]
+    },
+    {
+      name: "Romanian Deadlift", note: "Accessory ladder \u00B7 RPE 8",
+      sets: [ { w: 85, r: 8, warm: true }, { w: 95, r: 6 }, { w: 105, r: 6, top: true } ],
+      e1rm: "126.0", formula: "105 \u00D7 (1 + 6/30)",
+      tier: "gold", tierName: "Gold", pct: "74th",
+      spark: [114, 116, 118, 119, 121, 122, 124, 126]
+    }
+  ];
+
+  var LIFTS_DEV = [
+    {
+      name: "Back Squat", note: "Wave 3 \u00B7 RPE 9",
+      sets: [ { w: 120, r: 5, warm: true }, { w: 145, r: 3 }, { w: 165, r: 3, top: true } ],
+      e1rm: "181.5", formula: "165 \u00D7 (1 + 3/30)",
+      tier: "gold", tierName: "Gold", pct: "80th",
+      spark: [168, 169, 171, 170, 174, 176, 178, 181.5]
+    }
+  ];
+
+  var TIERS = [
+    { name: "Apex", lo: 97, hi: 100, key: "apex" },
+    { name: "Diamond", lo: 88, hi: 96, key: "diamond" },
+    { name: "Platinum", lo: 75, hi: 87, key: "platinum" },
+    { name: "Gold", lo: 55, hi: 74, key: "gold" },
+    { name: "Silver", lo: 40, hi: 54, key: "silver" },
+    { name: "Bronze", lo: 25, hi: 39, key: "bronze" },
+    { name: "Iron", lo: 0, hi: 24, key: "iron" }
+  ];
+
+  var COHORT = [
+    { r: 1, n: "A. Whitfield", s: 88, t: "diamond", tn: "Diamond", e: 91, st: 86, d: "" },
+    { r: 2, n: "S. Nakamura", s: 84, t: "platinum", tn: "Platinum", e: 80, st: 86, d: "+1" },
+    { r: 3, n: "L. Okonkwo", s: 79, t: "platinum", tn: "Platinum", e: 88, st: 75, d: "" },
+    { r: 4, n: "R. Castellanos", s: 76, t: "platinum", tn: "Platinum", e: 72, st: 78, d: "+2" },
+    { r: 5, n: "Maya Chen", s: 73, t: "gold", tn: "Gold", e: 81, st: 68, d: "+3", me: true },
+    { r: 6, n: "J. Fournier", s: 71, t: "gold", tn: "Gold", e: 66, st: 74, d: "" },
+    { r: 7, n: "E. Brennan", s: 69, t: "gold", tn: "Gold", e: 77, st: 65, d: "\u22121" },
+    { r: 8, n: "K. Silva", s: 66, t: "gold", tn: "Gold", e: 62, st: 69, d: "" }
+  ];
+
+  var FRIENDS = [
+    { r: 1, n: "Dev Ramanathan", s: 77, t: "platinum", tn: "Platinum", e: 71, st: 81, d: "+4", c: "M \u00B7 80\u201389 kg" },
+    { r: 2, n: "Maya Chen", s: 73, t: "gold", tn: "Gold", e: 81, st: 68, d: "+3", me: true, c: "F \u00B7 60\u201367 kg" },
+    { r: 3, n: "Priya Anand", s: 70, t: "gold", tn: "Gold", e: 84, st: 61, d: "", c: "F \u00B7 52\u201359 kg" },
+    { r: 4, n: "Tom Okafor", s: 64, t: "gold", tn: "Gold", e: 55, st: 70, d: "\u22122", c: "M \u00B7 90\u201399 kg" },
+    { r: 5, n: "Ines Duarte", s: 52, t: "silver", tn: "Silver", e: 58, st: 48, d: "+1", c: "F \u00B7 60\u201367 kg" },
+    { r: 6, n: "Sam Boateng", s: 36, t: "bronze", tn: "Bronze", e: 30, st: 41, d: "+6", c: "M \u00B7 70\u201379 kg" }
+  ];
+
+  /* ------------------------------------------------------------ tooltip */
+
+  var tip = document.getElementById("tip");
+  var tipTimer = null;
+
+  function showTip(target, html) {
+    tip.innerHTML = html;
+    var r = target.getBoundingClientRect();
+    var a = app.getBoundingClientRect();
+    var x = r.left - a.left + r.width / 2;
+    var y = r.top - a.top - 8;
+    tip.style.left = Math.max(64, Math.min(a.width - 64, x)) + "px";
+    tip.style.top = Math.max(34, y) + "px";
+    tip.classList.add("is-on");
+    window.clearTimeout(tipTimer);
+    tipTimer = window.setTimeout(hideTip, 2600);
+  }
+  function hideTip() { tip.classList.remove("is-on"); }
+
+  function bindTip(node, html) {
+    node.addEventListener("pointerenter", function () { showTip(node, html); });
+    node.addEventListener("pointerleave", hideTip);
+    node.addEventListener("focus", function () { showTip(node, html); });
+    node.addEventListener("blur", hideTip);
+    node.addEventListener("click", function (e) { e.stopPropagation(); showTip(node, html); });
+  }
+
+  /* -------------------------------------------------------- route trace */
+
+  function drawRoute(mount, viewBox, showMarker) {
+    mount.innerHTML = "";
+    var s = svg(320, 180, mount);
+    s.setAttribute("viewBox", viewBox);
+    s.setAttribute("aria-label", "Stylised trace of the Skyline Loop route");
+    s.setAttribute("role", "img");
+
+    var g = el("g", { opacity: "0.5" }, s);
+    var i;
+    for (i = 20; i < 320; i += 20) { el("line", { x1: i, y1: 0, x2: i, y2: 180, stroke: "#1A222C", "stroke-width": "1" }, g); }
+    for (i = 20; i < 180; i += 20) { el("line", { x1: 0, y1: i, x2: 320, y2: i, stroke: "#1A222C", "stroke-width": "1" }, g); }
+
+    var pts = "";
+    for (i = 0; i < ROUTE.length; i += 2) { pts += ROUTE[i] + "," + ROUTE[i + 1] + " "; }
+
+    el("polyline", { points: pts, fill: "none", stroke: "#0E2C2B", "stroke-width": "9",
+      "stroke-linejoin": "round", "stroke-linecap": "round" }, s);
+    var line = el("polyline", { points: pts, fill: "none", stroke: "var(--engine)", "stroke-width": "3.2",
+      "stroke-linejoin": "round", "stroke-linecap": "round" }, s);
+
+    if (showMarker) {
+      el("circle", { cx: 24, cy: 148, r: 6.5, fill: "var(--ink-0)", stroke: "var(--ember)", "stroke-width": "3" }, s);
+      el("circle", { cx: 292, cy: 74, r: 4, fill: "var(--engine-ink)" }, s);
+      var t = el("text", { x: 296, y: 66, fill: "var(--tx-3)", "font-size": "9",
+        "font-family": "var(--f-mono)", "text-anchor": "end" }, s);
+      t.textContent = "KM 6 \u00B7 +48 m";
+      if (!reduced) {
+        var len = line.getTotalLength ? line.getTotalLength() : 1400;
+        line.setAttribute("stroke-dasharray", len);
+        line.setAttribute("stroke-dashoffset", len);
+        line.style.transition = "stroke-dashoffset 1400ms cubic-bezier(0.3,0.7,0.2,1)";
+        window.setTimeout(function () { line.setAttribute("stroke-dashoffset", "0"); }, 60);
+      }
+    }
+  }
+
+  /* ------------------------------------------------------ splits chart */
+
+  function drawSplits() {
+    var mount = document.getElementById("splits");
+    mount.innerHTML = "";
+    var W = 330, H = 168, padL = 2, padR = 2, padT = 18, padB = 26;
+    var s = svg(W, H, mount);
+    s.setAttribute("role", "img");
+    s.setAttribute("aria-label", "Bar chart of pace for each kilometre, fastest 4:24 at km 12, slowest 5:09 at km 6, average 4:44");
+
+    var domainMax = 320, domainMin = 252;   /* 5:20 slow .. 4:12 fast */
+    var plotH = H - padT - padB;
+    var n = SPLITS.length;
+    var gap = 4;
+    var bw = (W - padL - padR - gap * (n - 1)) / n;
+
+    /* recessive grid at 4:20 / 4:40 / 5:00 */
+    [260, 280, 300].forEach(function (v) {
+      var frac = (domainMax - v) / (domainMax - domainMin);
+      var y = padT + plotH - plotH * frac;
+      el("line", { x1: padL, y1: y, x2: W - padR, y2: y, "class": "grid-line" }, s);
+    });
+
+    /* average */
+    var avgFrac = (domainMax - 284.4) / (domainMax - domainMin);
+    var ay = padT + plotH - plotH * avgFrac;
+    el("line", { x1: padL, y1: ay, x2: W - padR, y2: ay, "class": "avg-line" }, s);
+    var at = el("text", { x: W - padR, y: ay - 5, "class": "annot", "text-anchor": "end" }, s);
+    at.textContent = "AVG 4:44";
+
+    SPLITS.forEach(function (d, i) {
+      var frac = (domainMax - d.sec) / (domainMax - domainMin);
+      frac = Math.max(0.06, Math.min(1, frac));
+      var bh = plotH * frac;
+      var x = padL + i * (bw + gap);
+      var y = padT + plotH - bh;
+
+      el("rect", { x: x, y: padT, width: bw, height: plotH, rx: 3, fill: "var(--ink-2)", opacity: "0.55" }, s);
+      var bar = el("rect", { x: x, y: y, width: bw, height: bh, rx: 4, "class": "bar", tabindex: "0",
+        role: "img", "aria-label": "Kilometre " + d.km + ", " + mmss(d.sec) + " per kilometre" }, s);
+      if (d.partial) { bar.setAttribute("opacity", "0.55"); }
+
+      bindTip(bar, "<span class=\"tk\">Km " + d.km + (d.partial ? " \u00B7 0.4 km" : "") + "</span>" +
+        mmss(d.sec) + " /km &nbsp;\u00B7&nbsp; " + (d.el >= 0 ? "+" : "\u2212") + Math.abs(d.el) + " m");
+
+      var lab = el("text", { x: x + bw / 2, y: H - 9, "class": "ax", "text-anchor": "middle" }, s);
+      lab.textContent = d.km;
+
+      if (d.km === "12") {
+        var f = el("text", { x: x + bw / 2 + 4, y: y - 6, "class": "annot annot--pr", "text-anchor": "end" }, s);
+        f.textContent = "FASTEST 4:24";
+      }
+      if (d.km === "6") {
+        var sl = el("text", { x: x + bw / 2, y: y - 6, "class": "annot", "text-anchor": "middle" }, s);
+        sl.textContent = "5:09";
+      }
+    });
+
+    var cap = document.createElement("p");
+    cap.className = "h3sub";
+    cap.style.margin = "10px 0 0";
+    cap.innerHTML = "Slowest km 6 (+48 m of climb) \u00B7 fastest km 12 on the descent \u00B7 final 0.4 km shown part-weight.";
+    mount.appendChild(cap);
+  }
+
+  /* --------------------------------------------------------- HR zones */
+
+  function drawZones() {
+    var mount = document.getElementById("zones");
+    mount.innerHTML = "";
+    var W = 330, H = 34, gap = 2;
+    var s = svg(W, H, mount);
+    s.setAttribute("role", "img");
+    s.setAttribute("aria-label", "Segmented bar of time in heart-rate zones: Z1 2%, Z2 18%, Z3 46%, Z4 28%, Z5 6%");
+
+    var avail = W - gap * (ZONES.length - 1);
+    var x = 0;
+    ZONES.forEach(function (z) {
+      var w = avail * (z.pct / 100);
+      var r = el("rect", { x: x, y: 0, width: w, height: H, rx: 4, fill: z.color, tabindex: "0",
+        role: "img", "aria-label": z.z + " " + z.name + ", " + z.pct + " percent, " + mmss(z.sec) }, s);
+      bindTip(r, "<span class=\"tk\">" + z.z + " \u00B7 " + z.name + "</span>" + z.pct + "% &nbsp;\u00B7&nbsp; " +
+        mmss(z.sec) + " &nbsp;\u00B7&nbsp; " + z.bpm + " bpm");
+      if (w > 34) {
+        var t = el("text", { x: x + w / 2, y: H / 2 + 4, "text-anchor": "middle",
+          "font-size": "11", "font-weight": "700", fill: "#0A0D12",
+          "font-family": "var(--f-mono)" }, s);
+        t.textContent = z.pct + "%";
+      }
+      x += w + gap;
+    });
+
+    var lg = document.createElement("div");
+    lg.className = "legend";
+    ZONES.forEach(function (z) {
+      var li = document.createElement("span");
+      li.className = "li";
+      li.innerHTML = "<span class=\"sw\" style=\"background:" + z.color + "\"></span>" +
+        z.z + " " + z.name + " <span class=\"t\">" + mmss(z.sec) + "</span>";
+      lg.appendChild(li);
+    });
+    mount.appendChild(lg);
+  }
+
+  /* -------------------------------------------------------- sparkline */
+
+  function sparkline(values) {
+    var W = 92, H = 30, pad = 3;
+    var wrap = document.createElement("span");
+    var s = svg(W, H, wrap);
+    s.setAttribute("style", "width:" + W + "px;height:" + H + "px");
+    s.setAttribute("role", "img");
+    s.setAttribute("aria-label", "e1RM trend over the last 8 sessions, ending at " + values[values.length - 1] + " kilograms");
+
+    var min = Math.min.apply(null, values), max = Math.max.apply(null, values);
+    var span = (max - min) || 1;
+    var pts = "", lx = 0, ly = 0;
+    values.forEach(function (v, i) {
+      var x = pad + (W - pad * 2) * (i / (values.length - 1));
+      var y = H - pad - (H - pad * 2) * ((v - min) / span);
+      pts += x + "," + y + " ";
+      lx = x; ly = y;
+    });
+    el("polyline", { points: pts, fill: "none", stroke: "var(--strength)", "stroke-width": "2",
+      "stroke-linejoin": "round", "stroke-linecap": "round" }, s);
+    el("circle", { cx: lx, cy: ly, r: 4.5, fill: "var(--ink-1)" }, s);
+    el("circle", { cx: lx, cy: ly, r: 3, fill: "var(--strength-ink)" }, s);
+    return wrap;
+  }
+
+  /* ------------------------------------------------------- lift cards */
+
+  function renderLifts(mountId, data) {
+    var mount = document.getElementById(mountId);
+    mount.innerHTML = "";
+    data.forEach(function (L) {
+      var d = document.createElement("div");
+      d.className = "lift";
+
+      var head = document.createElement("div");
+      head.className = "lift__head";
+      head.innerHTML =
+        "<span><span class=\"nm\">" + L.name + "</span><span class=\"sub\">" + L.note + "</span></span>";
+      var sp = document.createElement("span");
+      sp.className = "spark";
+      sp.appendChild(sparkline(L.spark));
+      head.appendChild(sp);
+      d.appendChild(head);
+
+      var sets = document.createElement("div");
+      sets.className = "sets";
+      L.sets.forEach(function (st) {
+        var b = document.createElement("div");
+        b.className = "set" + (st.top ? " is-top" : "");
+        b.innerHTML = "<div class=\"w\">" + st.w + "<small> kg</small></div><div class=\"r\">" +
+          st.r + " reps" + (st.warm ? " \u00B7 warm-up" : "") + (st.top ? " \u00B7 top set" : "") + "</div>";
+        sets.appendChild(b);
+      });
+      d.appendChild(sets);
+
+      var e = document.createElement("div");
+      e.className = "e1rm";
+      e.innerHTML =
+        "<div><div class=\"micro\">e1RM</div><div class=\"v\">" + L.e1rm + "<small>kg</small></div></div>" +
+        "<div class=\"f\">Epley<br>" + L.formula + "</div>";
+      d.appendChild(e);
+
+      var chipRow = document.createElement("div");
+      chipRow.style.cssText = "padding:0 14px 14px;display:flex;gap:7px;flex-wrap:wrap";
+      chipRow.innerHTML =
+        "<span class=\"chip\"><span class=\"dot\" style=\"background:var(--t-" + L.tier + ")\"></span>" +
+        "<span class=\"tier tier-" + L.tier + "\">" + L.tierName + "</span>" +
+        "<span style=\"color:var(--tx-3)\">\u00B7</span>" + L.pct + " pctile</span>" +
+        "<span class=\"chip\">F \u00B7 60&ndash;67 kg \u00B7 25&ndash;34</span>";
+      if (mountId === "lifts-dev") {
+        chipRow.innerHTML =
+          "<span class=\"chip\"><span class=\"dot\" style=\"background:var(--t-" + L.tier + ")\"></span>" +
+          "<span class=\"tier tier-" + L.tier + "\">" + L.tierName + "</span>" +
+          "<span style=\"color:var(--tx-3)\">\u00B7</span>" + L.pct + " pctile</span>" +
+          "<span class=\"chip\">M \u00B7 80&ndash;89 kg \u00B7 25&ndash;34</span>";
+      }
+      d.appendChild(chipRow);
+
+      mount.appendChild(d);
+    });
+  }
+
+  /* ------------------------------------------------------------ gauge */
+
+  var SCORE = 73;
+
+  function polar(cx, cy, r, deg) {
+    var a = (deg - 90) * Math.PI / 180;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  }
+  function arcPath(cx, cy, r, a0, a1) {
+    var p0 = polar(cx, cy, r, a0), p1 = polar(cx, cy, r, a1);
+    var large = (a1 - a0) > 180 ? 1 : 0;
+    return "M" + p0[0].toFixed(2) + " " + p0[1].toFixed(2) +
+      " A" + r + " " + r + " 0 " + large + " 1 " + p1[0].toFixed(2) + " " + p1[1].toFixed(2);
+  }
+
+  function drawGauge() {
+    var s = document.getElementById("gauge");
+    s.innerHTML = "";
+    var cx = 116, cy = 112, r = 90;
+    var A0 = 215, SWEEP = 290;   /* degrees, clockwise from the lower-left */
+
+    /* tier ring \u2014 the ladder, drawn into the gauge */
+    TIERS.slice().reverse().forEach(function (t) {
+      var a0 = A0 + SWEEP * (t.lo / 100);
+      var a1 = A0 + SWEEP * ((t.hi + 1) / 100) - 2.2;
+      el("path", { d: arcPath(cx, cy, r + 15, a0, a1), fill: "none",
+        stroke: "var(--t-" + t.key + ")", "stroke-width": "4", "stroke-linecap": "round",
+        opacity: t.key === "gold" ? "0.95" : "0.34" }, s);
+    });
+
+    /* track */
+    el("path", { d: arcPath(cx, cy, r, A0, A0 + SWEEP), fill: "none",
+      stroke: "var(--ink-3)", "stroke-width": "13", "stroke-linecap": "round" }, s);
+
+    /* progress */
+    var prog = el("path", { d: arcPath(cx, cy, r, A0, A0 + SWEEP * (SCORE / 100)), fill: "none",
+      stroke: "var(--t-gold)", "stroke-width": "13", "stroke-linecap": "round" }, s);
+
+    /* knob */
+    var kp = polar(cx, cy, r, A0 + SWEEP * (SCORE / 100));
+    var knobG = el("g", {}, s);
+    el("circle", { cx: kp[0].toFixed(2), cy: kp[1].toFixed(2), r: 10, fill: "var(--ink-0)" }, knobG);
+    el("circle", { cx: kp[0].toFixed(2), cy: kp[1].toFixed(2), r: 6, fill: "var(--t-gold)" }, knobG);
+
+    /* end caps of the scale */
+    var t0 = el("text", { x: 22, y: 190, fill: "var(--tx-3)", "font-size": "10",
+      "font-family": "var(--f-mono)" }, s);
+    t0.textContent = "0";
+    var t1 = el("text", { x: 210, y: 190, fill: "var(--tx-3)", "font-size": "10",
+      "font-family": "var(--f-mono)", "text-anchor": "end" }, s);
+    t1.textContent = "100";
+
+    return { prog: prog, knob: knobG, cx: cx, cy: cy, r: r, A0: A0, SWEEP: SWEEP };
+  }
+
+  var gaugeParts = null;
+  var apexAnimated = false;
+
+  function animateApex() {
+    var eFill = document.getElementById("fill-engine");
+    var sFill = document.getElementById("fill-strength");
+    var mark = document.getElementById("scoremark");
+    var label = document.getElementById("marklabel");
+
+    if (apexAnimated || reduced) {
+      eFill.style.width = "81%";
+      sFill.style.width = "68%";
+      mark.style.left = "73%";
+      label.style.left = "73%";
+      document.getElementById("gauge-num").textContent = SCORE;
+      if (gaugeParts && !apexAnimated) {
+        gaugeParts.prog.setAttribute("stroke-dasharray", "none");
+      }
+      apexAnimated = true;
+      return;
+    }
+    apexAnimated = true;
+
+    /* one orchestrated moment: the arc sweeps, the number counts, the axes fill */
+    var len = gaugeParts.prog.getTotalLength ? gaugeParts.prog.getTotalLength() : 400;
+    gaugeParts.prog.setAttribute("stroke-dasharray", len);
+    gaugeParts.prog.setAttribute("stroke-dashoffset", len);
+    gaugeParts.knob.style.opacity = "0";
+    gaugeParts.prog.style.transition = "stroke-dashoffset 1100ms cubic-bezier(0.2,0.8,0.25,1)";
+    gaugeParts.knob.style.transition = "opacity 260ms ease 900ms";
+
+    var numEl = document.getElementById("gauge-num");
+    numEl.textContent = "0";
+
+    window.setTimeout(function () {
+      gaugeParts.prog.setAttribute("stroke-dashoffset", "0");
+      gaugeParts.knob.style.opacity = "1";
+      var t0 = performance.now();
+      function tick(now) {
+        var p = Math.min(1, (now - t0) / 1050);
+        var eased = 1 - Math.pow(1 - p, 3);
+        numEl.textContent = Math.round(SCORE * eased);
+        if (p < 1) { requestAnimationFrame(tick); } else { numEl.textContent = SCORE; }
+      }
+      requestAnimationFrame(tick);
+    }, 80);
+
+    window.setTimeout(function () {
+      eFill.style.width = "81%";
+      sFill.style.width = "68%";
+      mark.style.left = "73%";
+      label.style.left = "73%";
+    }, 420);
+  }
+
+  /* ----------------------------------------------------------- ladder */
+
+  function drawLadder() {
+    var mount = document.getElementById("ladder");
+    mount.innerHTML = "";
+    TIERS.forEach(function (t) {
+      var here = SCORE >= t.lo && SCORE <= t.hi;
+      var row = document.createElement("div");
+      row.className = "rung" + (here ? " is-here" : "") + (!here && t.lo > SCORE ? " is-dim" : "");
+      row.innerHTML =
+        "<span class=\"bead\" style=\"background:var(--t-" + t.key + ")\"></span>" +
+        "<span class=\"nm tier-" + t.key + "\">" + t.name + "</span>" +
+        (here ? "<span class=\"youpill\">YOU \u00B7 73</span>" : "") +
+        "<span class=\"rg\">" + t.lo + "\u2013" + t.hi + "</span>";
+      mount.appendChild(row);
+    });
+    var p = document.createElement("p");
+    p.className = "h3sub";
+    p.style.margin = "12px 0 0";
+    p.innerHTML = "Elite bands are gated: no one reaches <span class=\"tier tier-diamond\">Diamond</span> or " +
+      "<span class=\"tier tier-apex\">Apex</span> without at least Advanced on <em>both</em> axes, however far the other one runs.";
+    mount.parentNode.appendChild(p);
+  }
+
+  /* ------------------------------------------------------ leaderboard */
+
+  function row(d, showCohort) {
+    var s = document.createElement("div");
+    s.className = "lb" + (d.me ? " lb--me" : "");
+    var initials = d.n.split(" ").map(function (w) { return w[0]; }).join("").slice(0, 2).toUpperCase();
+    s.innerHTML =
+      "<span class=\"rk\">" + d.r + "</span>" +
+      "<span class=\"avatar" + (d.me ? " avatar--me" : "") + "\">" + initials + "</span>" +
+      "<span><span class=\"nm\">" + d.n + "</span><span class=\"meta\">" +
+        "<span class=\"tier tier-" + d.t + "\">" + d.tn + "</span>" +
+        "<span style=\"color:var(--engine-ink)\">E " + d.e + "</span>" +
+        "<span style=\"color:var(--strength-ink)\">S " + d.st + "</span>" +
+        (showCohort ? "<span>" + d.c + "</span>" : "") +
+      "</span></span>" +
+      "<span class=\"sc\"><span class=\"v\">" + d.s + "</span>" +
+        (d.d ? "<span class=\"d" + (d.d.indexOf("+") === 0 ? " up" : "") + "\">" + d.d + " wk</span>" : "") +
+      "</span>";
+    return s;
+  }
+
+  function drawBoards() {
+    var a = document.getElementById("lb-cohort");
+    COHORT.forEach(function (d) { a.appendChild(row(d, false)); });
+    var note = document.createElement("div");
+    note.className = "bandnote";
+    note.innerHTML = "You are 2 points from the <span class=\"tier tier-platinum\">Platinum</span> band and " +
+      "3 places from the podium. Cohort refreshes every Monday 00:00 local.";
+    a.appendChild(note);
+
+    var b = document.getElementById("lb-friends");
+    FRIENDS.forEach(function (d) { b.appendChild(row(d, true)); });
+    var note2 = document.createElement("div");
+    note2.className = "bandnote";
+    note2.innerHTML = "Dev outranks you on strength by 13 points and trails your engine by 10. " +
+      "Neither of you can pass the other without training your weaker half.";
+    b.appendChild(note2);
+  }
+
+  /* ------------------------------------------------------ navigation */
+
+  var subStack = [];
+
+  function setTab(id) {
+    var i, screens = document.querySelectorAll(".screen:not(.screen--sub)");
+    for (i = 0; i < screens.length; i++) { screens[i].classList.toggle("is-active", screens[i].id === id); }
+    var tabs = document.querySelectorAll(".tab");
+    for (i = 0; i < tabs.length; i++) {
+      var on = tabs[i].getAttribute("data-tab") === id;
+      tabs[i].classList.toggle("is-on", on);
+      if (on) { tabs[i].setAttribute("aria-current", "page"); } else { tabs[i].removeAttribute("aria-current"); }
+    }
+    document.getElementById("fab").style.display = (id === "s-feed") ? "flex" : "none";
+    if (id === "s-apex") { animateApex(); }
+    var act = document.getElementById(id);
+    if (act) { act.scrollTop = 0; }
+  }
+
+  function push(id) {
+    var sc = document.getElementById(id);
+    if (!sc) { return; }
+    sc.classList.add("is-active");
+    sc.scrollTop = 0;
+    subStack.push(id);
+    document.querySelector(".tabbar").style.display = "none";
+    document.getElementById("fab").style.display = "none";
+    if (id === "s-run") { drawRoute(document.getElementById("detail-route"), "0 18 320 152", true); }
+  }
+
+  function pop() {
+    var id = subStack.pop();
+    if (id) { document.getElementById(id).classList.remove("is-active"); }
+    if (!subStack.length) {
+      document.querySelector(".tabbar").style.display = "grid";
+      var cur = document.querySelector(".screen:not(.screen--sub).is-active");
+      document.getElementById("fab").style.display = (cur && cur.id === "s-feed") ? "flex" : "none";
+    }
+  }
+
+  document.addEventListener("click", function (e) {
+    var t = e.target;
+
+    var tab = t.closest ? t.closest(".tab") : null;
+    if (tab) { setTab(tab.getAttribute("data-tab")); return; }
+
+    var back = t.closest ? t.closest("[data-back]") : null;
+    if (back) { pop(); return; }
+
+    var kudo = t.closest ? t.closest(".kudo") : null;
+    if (kudo && kudo.hasAttribute("data-kudo")) {
+      e.stopPropagation();
+      var n = kudo.querySelector(".n");
+      var base = parseInt(kudo.getAttribute("data-kudo"), 10);
+      var on = kudo.classList.toggle("is-on");
+      n.textContent = on ? base + 1 : base;
+      return;
+    }
+
+    var opener = t.closest ? t.closest("[data-open]") : null;
+    if (opener) { push(opener.getAttribute("data-open")); return; }
+
+    var seg = t.closest ? t.closest(".seg button") : null;
+    if (seg) {
+      var boards = document.querySelectorAll(".board");
+      for (var i = 0; i < boards.length; i++) { boards[i].classList.toggle("is-on", boards[i].id === seg.getAttribute("data-board")); }
+      var btns = document.querySelectorAll(".seg button");
+      for (var j = 0; j < btns.length; j++) {
+        var isOn = btns[j] === seg;
+        btns[j].classList.toggle("is-on", isOn);
+        btns[j].setAttribute("aria-selected", isOn ? "true" : "false");
+      }
+      return;
+    }
+
+    if (t.closest && t.closest(".sport")) { closeSheet(); return; }
+  });
+
+  /* Enter / Space activate the role="button" surfaces (feed cards, kudos) */
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") { return; }
+    var t = e.target;
+    if (!t || !t.getAttribute || t.getAttribute("role") !== "button") { return; }
+    e.preventDefault();
+    t.click();
+  });
+
+  /* sheet */
+  var sheet = document.getElementById("sheet");
+  var scrim = document.getElementById("scrim");
+  function openSheet() { sheet.classList.add("is-on"); scrim.classList.add("is-on"); }
+  function closeSheet() { sheet.classList.remove("is-on"); scrim.classList.remove("is-on"); }
+  document.getElementById("fab").addEventListener("click", openSheet);
+  scrim.addEventListener("click", closeSheet);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      if (sheet.classList.contains("is-on")) { closeSheet(); }
+      else if (subStack.length) { pop(); }
+      hideTip();
+    }
+  });
+
+  /* -------------------------------------------------------------- boot */
+
+  drawRoute(document.getElementById("feed-route"), "0 22 320 140", false);
+  drawSplits();
+  drawZones();
+  renderLifts("lifts", LIFTS);
+  renderLifts("lifts-dev", LIFTS_DEV);
+  gaugeParts = drawGauge();
+  drawLadder();
+  drawBoards();
+  setTab("s-feed");
+})();
+</script>
