@@ -1,6 +1,7 @@
 import type { AppConfig } from './config.js';
 import type { Database } from './db/client.js';
 import type { MailSender } from './lib/mailer.js';
+import type { QueueLike } from './lib/queue.js';
 import type { MfaTicketStore } from './services/mfa-tickets.js';
 
 export interface AppContext {
@@ -8,6 +9,8 @@ export interface AppContext {
   db: Database;
   mail: MailSender;
   mfaTickets: MfaTicketStore;
+  /** Activity processing jobs. Swappable for a real broker in Phase 3. */
+  queue: QueueLike;
 }
 
 declare module 'fastify' {

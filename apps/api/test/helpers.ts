@@ -15,6 +15,8 @@ export interface TestHarness {
   db: Database;
   ctx: AppContext;
   mail: OutboundMail[];
+  /** Resolves once the upload's pipeline job has finished (or failed). */
+  awaitProcessed: (activityId: string) => Promise<void>;
   close: () => Promise<void>;
 }
 
@@ -51,6 +53,7 @@ export async function createHarness(
     db,
     ctx: app.ctx,
     mail: mailer.sent,
+    awaitProcessed: (activityId: string) => app.ctx.queue.awaitJob(activityId),
     close: async () => {
       await app.close();
       await sql.end();

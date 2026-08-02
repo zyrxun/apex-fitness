@@ -15,6 +15,7 @@ import type { AppContext } from './context.js';
 import type { Database } from './db/client.js';
 import { ApiError } from './lib/errors.js';
 import { createMailSender, type MailSender } from './lib/mailer.js';
+import { createQueue } from './lib/queue.js';
 import { MfaTicketStore } from './services/mfa-tickets.js';
 import authPlugin from './plugins/auth.js';
 import authRoutes from './routes/auth.js';
@@ -23,6 +24,8 @@ import privacyRoutes from './routes/privacy.js';
 import socialRoutes from './routes/social.js';
 import gdprRoutes from './routes/gdpr.js';
 import userRoutes from './routes/users.js';
+import activityRoutes from './routes/activities.js';
+import sportRoutes from './routes/sports.js';
 
 export interface BuildAppOptions {
   config: AppConfig;
@@ -45,8 +48,14 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     db,
     mail: options.mail ?? createMailSender(config.MAIL_TRANSPORT, config.MAIL_FROM),
     mfaTickets: new MfaTicketStore(),
+    queue: createQueue(config.ACTIVITY_QUEUE_MODE, (error, key) =>
+      app.log.error({ err: error, activityId: key }, 'activity processing job crashed'),
+    ),
   };
   app.decorate('ctx', ctx);
+  app.addHook('onClose', async () => {
+    await ctx.queue.close();
+  });
 
   app.setErrorHandler((error, request, reply) => {
     if (hasZodFastifySchemaValidationErrors(error)) {
@@ -90,7 +99,8 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
       info: {
         title: 'Apex Fitness API',
         description:
-          'Phase 1 — Identity, Profiles & Privacy Core. Canonical storage is metric + WGS-84 + UTC.',
+          'Phases 1-2 — Identity, Profiles & Privacy Core plus Activity Recording. ' +
+          'Canonical storage is metric + WGS-84 + UTC.',
         version: '0.1.0',
       },
       servers: [{ url: config.PUBLIC_BASE_URL }],
@@ -107,6 +117,8 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
         { name: 'social', description: 'Blocks, mutes, reports' },
         { name: 'gdpr', description: 'Data export and account deletion' },
         { name: 'users', description: 'Public user lookup' },
+        { name: 'activities', description: 'Activity upload, processing, CRUD and streams' },
+        { name: 'sports', description: 'Sport taxonomy' },
       ],
     },
     transform: jsonSchemaTransform,
@@ -144,6 +156,8 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   await app.register(socialRoutes);
   await app.register(gdprRoutes, { prefix: '/me' });
   await app.register(userRoutes, { prefix: '/users' });
+  await app.register(activityRoutes);
+  await app.register(sportRoutes);
 
   return app;
 }

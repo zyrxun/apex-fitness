@@ -8,10 +8,15 @@ import {
   type ExportTable,
 } from '@apex/shared';
 import {
+  activities,
+  activityEfforts,
+  activitySplits,
+  activityStreams,
   blocks,
   bodyweightEntries,
   credentials,
   emailTokens,
+  hrZoneSettings,
   identities,
   mutes,
   privacySettings,
@@ -20,6 +25,7 @@ import {
   recoveryCodes,
   reports,
   sessions,
+  swimLengths,
   totpCredentials,
   users,
 } from '../db/schema.js';
@@ -92,6 +98,12 @@ const gdprRoutes: FastifyPluginAsyncZod = async (app) => {
         blockRows,
         muteRows,
         reportRows,
+        hrZoneRows,
+        activityRows,
+        streamRows,
+        splitRows,
+        swimRows,
+        effortRows,
       ] = await Promise.all([
         ctx.db.select().from(users).where(eq(users.id, userId)),
         ctx.db.select().from(identities).where(eq(identities.userId, userId)),
@@ -109,6 +121,31 @@ const gdprRoutes: FastifyPluginAsyncZod = async (app) => {
           .select()
           .from(reports)
           .where(or(eq(reports.reporterUserId, userId), eq(reports.targetUserId, userId))),
+        ctx.db.select().from(hrZoneSettings).where(eq(hrZoneSettings.userId, userId)),
+        ctx.db.select().from(activities).where(eq(activities.userId, userId)),
+        // Child rows are reached through the owning activity, which is the only
+        // place the user id lives.
+        ctx.db
+          .select({
+            activityId: activityStreams.activityId,
+            streamType: activityStreams.streamType,
+            sampleCount: activityStreams.sampleCount,
+            data: activityStreams.data,
+          })
+          .from(activityStreams)
+          .innerJoin(activities, eq(activities.id, activityStreams.activityId))
+          .where(eq(activities.userId, userId)),
+        ctx.db
+          .select({ split: activitySplits })
+          .from(activitySplits)
+          .innerJoin(activities, eq(activities.id, activitySplits.activityId))
+          .where(eq(activities.userId, userId)),
+        ctx.db
+          .select({ length: swimLengths })
+          .from(swimLengths)
+          .innerJoin(activities, eq(activities.id, swimLengths.activityId))
+          .where(eq(activities.userId, userId)),
+        ctx.db.select().from(activityEfforts).where(eq(activityEfforts.userId, userId)),
       ]);
 
       const tables: Record<ExportTable, Row[]> = {
@@ -125,6 +162,12 @@ const gdprRoutes: FastifyPluginAsyncZod = async (app) => {
         blocks: serializeRows(blockRows as Row[]),
         mutes: serializeRows(muteRows as Row[]),
         reports: serializeRows(reportRows as Row[]),
+        hr_zone_settings: serializeRows(hrZoneRows as Row[]),
+        activities: serializeRows(activityRows as Row[]),
+        activity_streams: serializeRows(streamRows as Row[]),
+        activity_splits: serializeRows(splitRows.map((r) => r.split) as Row[]),
+        swim_lengths: serializeRows(swimRows.map((r) => r.length) as Row[]),
+        activity_efforts: serializeRows(effortRows as Row[]),
       };
 
       return reply
@@ -223,6 +266,14 @@ const gdprRoutes: FastifyPluginAsyncZod = async (app) => {
         await tx.delete(emailTokens).where(eq(emailTokens.userId, userId));
         await tx.delete(privacyZones).where(eq(privacyZones.userId, userId));
         await tx.delete(bodyweightEntries).where(eq(bodyweightEntries.userId, userId));
+
+        // Activities are soft-deleted and forced private rather than dropped:
+        // the hard purge happens with the tombstone (TODO below), but nothing
+        // of a deleted account stays readable in the meantime.
+        await tx
+          .update(activities)
+          .set({ visibility: 'private', deletedAt: now, updatedAt: now })
+          .where(eq(activities.userId, userId));
 
         await tx
           .update(privacySettings)

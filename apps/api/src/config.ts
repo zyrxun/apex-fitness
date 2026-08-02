@@ -23,6 +23,11 @@ const envSchema = z.object({
   DEFAULT_REGION: z.string().default('global'),
   PUBLIC_BASE_URL: z.string().default('http://localhost:3000'),
 
+  // How uploaded activities reach the processing pipeline. `serial` is the
+  // in-process worker; `inline` runs the pipeline inside the request. Swapping
+  // in Redis/BullMQ (Phase 3) adds a value here and nothing else.
+  ACTIVITY_QUEUE_MODE: z.enum(['serial', 'inline']).default('serial'),
+
   // Sign in with Apple. Without APPLE_BUNDLE_ID the route keeps returning
   // 501 oauth_not_configured, so the feature is opt-in per deployment.
   APPLE_BUNDLE_ID: z.string().min(1).optional(),

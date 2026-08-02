@@ -14,6 +14,14 @@ export const EXPORT_TABLES = [
   'blocks',
   'mutes',
   'reports',
+  'hr_zone_settings',
+  'activities',
+  // Raw + derived sample arrays. Large, but they are the athlete's actual
+  // training data — an export without them is not a portable export.
+  'activity_streams',
+  'activity_splits',
+  'swim_lengths',
+  'activity_efforts',
 ] as const;
 export type ExportTable = (typeof EXPORT_TABLES)[number];
 
