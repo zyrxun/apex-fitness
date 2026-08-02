@@ -1,6 +1,6 @@
 # Apex Fitness — Master Plan & Implementation Checklist
 
-A social fitness platform combining Strava-style endurance tracking (running, cycling, swimming) with Liftoff-style competitive weightlifting rankings — built to exploit the documented weaknesses of both incumbents.
+**The app for hybrid athletes** — people who run *and* lift. Strava-grade endurance tracking (running, cycling, swimming) fused with Liftoff-grade competitive strength rankings into one profile, one training-load model, and one rank that requires both.
 
 **Research inputs:** [research/strava.md](research/strava.md) · [research/liftoff.md](research/liftoff.md) · [research/china-market-entry.md](research/china-market-entry.md)
 
@@ -8,12 +8,24 @@ A social fitness platform combining Strava-style endurance tracking (running, cy
 
 ## 1. Vision & Positioning
 
-**One product, two engines:**
+### The wedge: the hybrid athlete
 
-1. **Endurance engine** — GPS activity tracking, social feed, competitive leaderboards, and training analytics for run/ride/swim. Compete with Strava by being generous where Strava has become extractive.
-2. **Strength engine** — logged lifts converted to estimated 1RM, normalized by bodyweight/sex/age, and ranked on percentile ladders. Compete with Liftoff by being rigorous where Liftoff is gamified-to-a-fault.
+Strava has no strength story at all; Liftoff has no cardio story at all. Meanwhile the fastest-growing segment in fitness is people who do both — Hyrox sells out global events, CrossFit normalized "strong *and* conditioned," and every gym is full of runners who lift. Those people currently run two apps that don't know about each other, and neither can answer the question they actually care about: **"am I fit?"** — not "am I fast" or "am I strong."
 
-**Why now — the incumbents' self-inflicted wounds:**
+We are not "Strava but cheaper" or "Liftoff but fair." We are the only app for a group both incumbents structurally ignore — a position neither can copy without becoming the other.
+
+**The flagship mechanic: the Apex Score.** A combined rank where your engine (pace/VO2max-proxy percentiles) and your strength (e1RM percentiles) both feed one number — and you can't max it by being one-dimensional. A 180kg-squatter who can't run a mile and a 2:50 marathoner who can't do a pull-up both rank *Intermediate overall*. Inherently viral ("what's your Apex Score?"), and structurally uncopyable by either incumbent.
+
+**The technical moat: one fatigue model across both.** Strava's Fitness & Freshness only sees cardio; every lifting app ignores systemic fatigue from running. A training-load engine that knows Tuesday's heavy squats are why Thursday's tempo run felt terrible — and adjusts your plan accordingly — is something neither company can ship without becoming the other.
+
+**The identity wedge:** Strava culture intimidates lifters; lifting culture intimidates runners. Percentile-based ranks fix both — you're only ever compared to your cohort (sex, bodyweight, age), never to elites. *The app where being a beginner at your second sport is the point.*
+
+**Two engines underneath:**
+
+1. **Endurance engine** — GPS activity tracking, social feed, competitive leaderboards, and training analytics for run/ride/swim. Generous where Strava has become extractive.
+2. **Strength engine** — logged lifts converted to estimated 1RM, normalized by bodyweight/sex/age, and ranked on percentile ladders. Rigorous where Liftoff is gamified-to-a-fault.
+
+**Tailwinds — the incumbents' self-inflicted wounds (secondary positioning):**
 
 | Grievance | Incumbent behavior | Our counter-position |
 |---|---|---|
@@ -54,14 +66,16 @@ A social fitness platform combining Strava-style endurance tracking (running, cy
 
 ## 3. Product Pillars & Differentiators
 
-1. **Generous free tier** — everything Strava paywalled in 2020–2025 is free here: full segment-equivalent leaderboards, challenges, annual recap, route planning basics.
-2. **Open platform** — public API, webhooks, one-click export, no rug-pulls. Court the developers Strava burned.
-3. **Serious swimming** — SWOLF, stroke type detection, pool-length auto-detect, open-water GPS smoothing, drill logging.
-4. **Verified, fair strength ranks** — physics-sane e1RM caps, video-verification tier for leaderboard tops, age/sex/bodyweight normalization, no purchasable rank.
-5. **Prescriptive coaching** — adaptive training plans that consume the analytics engine (CTL/ATL/TSB) and adjust to real logged load.
-6. **Privacy-first** — private zones on by default, aggregate features opt-in, granular per-activity visibility, no dark patterns.
-7. **Low-pressure social mode** — optional "quiet mode" hiding pace/weight numbers from the feed; supportive, not comparative, for users intimidated by Strava culture.
-8. **One identity across cardio + strength** — the runner who lifts twice a week gets one profile, one training load model, one recap. Nobody else does this.
+1. **The Apex Score** — one combined rank requiring both engine and strength; percentile-normalized by sex/bodyweight/age so beginners compete in their cohort, not against elites. The flagship mechanic and the viral loop.
+2. **Unified hybrid training load** — one fatigue model (CTL/ATL/TSB extended with strength tonnage/intensity) across all training; the analytics and coaching moat.
+3. **Hybrid competition formats** — combined-event challenges ("5k time + DOTS-adjusted deadlift total"), Hyrox-style scored simulations, alternating engine/iron seasons. Formats neither incumbent can host.
+4. **Cross-modality team leagues** — a run crew, a CrossFit box, and a powerlifting gym enter the same league because scoring is percentile-normalized. Strava's stickiest loop (local rivalry), multiplied across venues.
+5. **Verified, fair strength ranks** — physics-sane e1RM caps, video-verification tier for leaderboard tops, no purchasable rank ever.
+6. **Generous free tier & open platform** — everything Strava paywalled in 2020–2025 is free; public API, webhooks, one-click export, no rug-pulls. Court the developers Strava burned.
+7. **Serious swimming** — SWOLF, stroke type detection, pool-length auto-detect, open-water GPS smoothing, drill logging.
+8. **Prescriptive hybrid coaching** — adaptive plans that consume the unified load model and adjust when lifting fatigue hits running (and vice versa). The premium product.
+9. **Privacy-first** — private zones on by default, aggregate features opt-in, granular per-activity visibility, no dark patterns.
+10. **Low-pressure by design** — cohort ranks + optional "quiet mode" hiding raw numbers; the app where being a beginner at your second sport is the point.
 
 ---
 
@@ -92,6 +106,13 @@ A social fitness platform combining Strava-style endurance tracking (running, cy
 - **Bootstrap data:** OpenPowerlifting dump for SBD; extend to accessory lifts with our own telemetry over time.
 - **Schema trap fixed on day one:** dumbbell lifts store per-hand weight + hand-count explicitly (Liftoff's single-vs-pair ambiguity corrupts their data).
 - **Anti-cheat:** physics-sanity bounds vs world records, velocity-of-progress anomaly detection, optional video verification for top-percentile leaderboard placement.
+
+### 4.4b Apex Score engine (the flagship)
+- **Inputs:** strength percentile (best e1RM percentiles across core lifts, cohort-normalized) + engine percentile (pace/power/VO2max-proxy percentiles across endurance sports, cohort-normalized).
+- **Combination rule:** designed so one-dimensionality caps the score — e.g. weighted toward the *lower* of the two components (exact curve to be tuned in beta; a pure average lets a specialist coast). Elite overall must require at least Advanced in both.
+- **Cohorts:** same normalization stack as strength ranks — sex × bodyweight × age multipliers — so the score is fair at every body type and age.
+- **Freshness:** engine component decays without recent training (strength decays slower, mirroring physiology) so the score reflects current fitness, not career bests.
+- **Output:** one number + the Beginner→Elite ladder, with a two-axis breakdown (engine/strength) on the profile — the shareable identity object of the whole product.
 
 ### 4.5 Segments-alternative — design around Strava's patents
 - Do **not** clone user-drawn start/finish segments with all-time KOM tables.
@@ -203,6 +224,9 @@ Work through in order; phases 1–4 are the MVP line. Items marked 🇨🇳 are 
 - [ ] Anti-cheat v1: physics bounds vs world records, progress-velocity anomaly flags
 - [ ] Video verification tier (upload → review → verified badge; required for top-percentile leaderboard placement)
 - [ ] Strength ↔ endurance unified profile (one training-load model across both)
+- [ ] **Apex Score v1: engine percentile + strength percentile → combined rank** (lower-component-weighted curve; two-axis profile breakdown)
+- [ ] Apex Score freshness decay (engine decays faster than strength without training)
+- [ ] Apex Score share card (the "what's your Apex Score?" viral asset)
 
 ### Phase 5 — Social Layer
 - [ ] Follow graph (asymmetric) + optional friend (mutual) layer
@@ -223,15 +247,20 @@ Work through in order; phases 1–4 are the MVP line. Items marked 🇨🇳 are 
 - [ ] Effort-matched divisions (by pace/power cohort, not one global table)
 - [ ] Head-to-head challenges (challenge a friend on a route/distance/duration)
 - [ ] Strength leaderboards: per-exercise, DOTS absolute, filterable by sex/age-class/weight-class/region/gym
-- [ ] Gym-vs-gym team competitions
+- [ ] Apex Score leaderboards (global/regional/club, cohort-filtered)
+- [ ] **Hybrid combined-event challenges** ("5k time + DOTS deadlift total", monthly hybrid ladders)
+- [ ] Hyrox-style scored simulation format (run + functional stations, self-recorded at any gym)
+- [ ] Alternating "engine week / iron week" seasonal structure
+- [ ] **Cross-modality team leagues** — run crews, CrossFit boxes, and powerlifting gyms in one percentile-normalized league (supersedes gym-vs-gym only)
 - [ ] Challenges: distance/elevation/streak/e1RM-total challenges, badges — **all free**
 - [ ] Goals: weekly/annual distance, time, elevation, strength targets
 - [ ] Seasons for strength ranks (soft reset with placement, à la Liftoff Jan/May/Sep — but no purchasable boosts, ever)
 - [ ] Local legends-style frequency crown (distinct mechanic from Strava's — include in FTO review)
 
 ### Phase 7 — Training Analytics & Coaching
-- [ ] Training load: TRIMP-based Relative Effort equivalent
-- [ ] Fitness/Fatigue/Form: CTL/ATL/TSB model with charts
+- [ ] Training load: TRIMP-based Relative Effort equivalent for endurance
+- [ ] Strength load quantification (tonnage × intensity-relative-to-e1RM → comparable load units)
+- [ ] **Unified Fitness/Fatigue/Form: CTL/ATL/TSB model fed by BOTH endurance and strength load** (the hybrid moat — squats on Tuesday explain the bad tempo run on Thursday)
 - [ ] Power analytics: FTP estimate, power curve, W' balance
 - [ ] Running: VO2max estimate, race-time predictor, GAP trends
 - [ ] Swim analytics: SWOLF trends, stroke efficiency, CSS (critical swim speed)
@@ -239,8 +268,8 @@ Work through in order; phases 1–4 are the MVP line. Items marked 🇨🇳 are 
 - [ ] Personal records: auto-detected PRs across all sports, PR timeline
 - [ ] Annual recap ("Year in Sport" equivalent) — **free**
 - [ ] Weekly/monthly summary emails & in-app reports
-- [ ] **Premium: adaptive training plans** (5K→marathon, century, swim, strength blocks) that adjust to logged load & missed sessions
-- [ ] Premium: fatigue-aware daily workout suggestions across cardio + strength (the unified-profile payoff)
+- [ ] **Premium: adaptive HYBRID training plans** (Hyrox prep, run-plus-lift blocks, 5K→marathon, century, swim, strength blocks) that adjust to unified logged load & missed sessions
+- [ ] Premium: fatigue-aware daily workout suggestions across cardio + strength (the unified-model payoff)
 
 ### Phase 8 — Routes & Maps
 - [ ] Map rendering via abstraction layer (Mapbox/OSM)
@@ -318,10 +347,15 @@ Work through in order; phases 1–4 are the MVP line. Items marked 🇨🇳 are 
 
 ## 8. Sequencing & MVP Definition
 
-**MVP = Phases 0–4 + minimal slices of 5 and 7:** record run/ride/swim, import full Strava/Garmin history, log lifts, see your strength rank, follow friends, feed + kudos, PRs and basic charts. Ship the MVP to closed beta before building the competitive layer — leaderboards with 50 users are worse than no leaderboards.
+**MVP = Phases 0–4 + minimal slices of 5 and 7:** record run/ride/swim, import full Strava/Garmin history, log lifts, see your strength rank **and your Apex Score**, follow friends, feed + kudos, PRs and basic charts. The Apex Score is in the MVP because it *is* the product thesis — everything else is table stakes. Ship to closed beta before building the competitive layer — leaderboards with 50 users are worse than no leaderboards.
 
-**The two riskiest bets to validate earliest:**
-1. Import-first onboarding actually wows Strava refugees (test in week one of beta).
-2. Strength ranks feel fair and motivating with OpenPowerlifting-bootstrapped standards (test with lifters before building seasons/leaderboards on top).
+**The three riskiest bets to validate earliest:**
+1. The Apex Score lands — hybrid athletes see their number, understand it, and share it (test the combination curve with real imported data in week one).
+2. Import-first onboarding actually wows Strava refugees (a Strava import alone should produce a meaningful engine percentile immediately).
+3. Strength ranks feel fair and motivating with OpenPowerlifting-bootstrapped standards (test with lifters before building seasons/leaderboards on top).
 
-**Deliberately deferred:** DMs, Wear OS, 3D flyovers, gym-vs-gym, China track — none block the core loop.
+**Beta recruiting follows the wedge:** seed with Hyrox training groups, CrossFit boxes, and run clubs with strength programs — hybrid communities first, single-sport communities second.
+
+**Deliberately deferred:** DMs, Wear OS, 3D flyovers, China track — none block the core loop.
+
+**China note:** the hybrid concept degrades gracefully for the China fork — Apex Score works indoor-only (erg/treadmill distance + lifts), so the strength-first China product keeps the flagship mechanic without touching GPS/map law.

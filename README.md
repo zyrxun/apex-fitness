@@ -1,6 +1,6 @@
 # Apex Fitness
 
-A social fitness tracking app — a Strava competitor covering running, cycling, and swimming, plus competitive weightlifting rankings inspired by Liftoff.
+**The app for hybrid athletes** — people who run *and* lift. Strava-grade endurance tracking (running, cycling, swimming) fused with Liftoff-grade competitive strength rankings into one profile, one training-load model, and one rank that requires both: the **Apex Score**.
 
 ## Status
 
