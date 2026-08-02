@@ -3,6 +3,8 @@ import { z } from 'zod';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import type { RateLimitOptions } from '@fastify/rate-limit';
 import {
+  appleSignInBodySchema,
+  appleSignInResponseSchema,
   errorResponseSchema,
   forgotPasswordBodySchema,
   idParamSchema,
@@ -24,7 +26,7 @@ import {
   totpEnrollResponseSchema,
   verifyEmailBodySchema,
 } from '@apex/shared';
-import { credentials, users } from '../db/schema.js';
+import { credentials, identities, users } from '../db/schema.js';
 import { badRequest, notFound, notImplemented, unauthorized } from '../lib/errors.js';
 import { hashPassword, verifyPassword } from '../lib/crypto.js';
 import { iso, isoRequired } from '../lib/time.js';
@@ -48,6 +50,7 @@ import {
   verifyTotpCode,
 } from '../services/totp.js';
 import { createUserAccount, findActiveUserById, findUserByEmail } from '../services/users.js';
+import { resolveAppleAccount, verifyAppleIdentityToken } from '../services/apple.js';
 
 const errorResponses = {
   400: errorResponseSchema,
@@ -142,7 +145,20 @@ const authRoutes: FastifyPluginAsyncZod = async (app) => {
         .from(credentials)
         .where(eq(credentials.userId, user.id))
         .limit(1);
-      if (!credential) throw invalid;
+      if (!credential) {
+        // A passwordless account has no password to get wrong; telling the
+        // client which button to press beats an endless retry loop.
+        const [identity] = await ctx.db
+          .select({ provider: identities.provider })
+          .from(identities)
+          .where(eq(identities.userId, user.id))
+          .limit(1);
+        if (!identity) throw invalid;
+        throw unauthorized(
+          'use_social_login',
+          `This account signs in with ${identity.provider === 'apple' ? 'Apple' : 'Google'}`,
+        );
+      }
       if (!(await verifyPassword(credential.passwordHash, request.body.password))) throw invalid;
 
       const totp = await getTotp(ctx, user.id);
@@ -442,28 +458,74 @@ const authRoutes: FastifyPluginAsyncZod = async (app) => {
     },
   );
 
-  // TODO(phase-1+): implement once Apple/Google developer credentials exist.
-  // The identities table is already the provider-agnostic seam; this route only
-  // needs an id-token verification step per provider.
-  for (const path of ['/apple', '/google'] as const) {
-    app.post(
-      path,
-      {
-        schema: {
-          tags: ['auth'],
-          summary: `Sign in with ${path === '/apple' ? 'Apple' : 'Google'} (not implemented)`,
-          body: oauthStartBodySchema,
-          response: { 501: errorResponseSchema, ...errorResponses },
+  app.post(
+    '/apple',
+    {
+      config: strictRateLimitConfig,
+      schema: {
+        tags: ['auth'],
+        summary: 'Sign in with Apple (native app flow); 501 until APPLE_BUNDLE_ID is set',
+        description:
+          'Verifies the identity token against Apple’s JWKS, then signs in, links or creates the account and issues the same session pair as password login.',
+        body: appleSignInBodySchema,
+        response: {
+          200: appleSignInResponseSchema,
+          403: errorResponseSchema,
+          501: errorResponseSchema,
+          ...errorResponses,
         },
       },
-      async () => {
-        throw notImplemented(
-          'oauth_not_configured',
-          'Third-party sign-in requires provider credentials that are not configured yet',
-        );
+    },
+    async (request) => {
+      // TODO(pre-launch): exchange request.body.authorizationCode at
+      // appleid.apple.com/auth/token and store the refresh token, so account
+      // deletion can call /auth/revoke — Apple requires that once the app ships.
+      const identity = await verifyAppleIdentityToken(ctx, request.body.identityToken);
+      const { user, created } = await resolveAppleAccount(ctx, identity, request.body.fullName);
+
+      // Apple is one strong factor, not two — an enrolled TOTP still applies,
+      // exactly as it does after a correct password.
+      const totp = await getTotp(ctx, user.id);
+      if (isTotpEnabled(totp)) {
+        const { ticket, expiresIn } = ctx.mfaTickets.issue(user.id);
+        return { status: 'mfa_required' as const, mfaTicket: ticket, expiresIn };
+      }
+
+      const tokens = await startSession(ctx, user, device(request));
+      return {
+        status: 'authenticated' as const,
+        created,
+        user: publicUser(user),
+        tokens: {
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          tokenType: 'Bearer' as const,
+          expiresIn: tokens.expiresIn,
+        },
+      };
+    },
+  );
+
+  // TODO(phase-1+): implement once Google developer credentials exist. The
+  // identities table is the same provider-agnostic seam Apple uses; this route
+  // only needs a Google id-token verification step.
+  app.post(
+    '/google',
+    {
+      schema: {
+        tags: ['auth'],
+        summary: 'Sign in with Google (not implemented)',
+        body: oauthStartBodySchema,
+        response: { 501: errorResponseSchema, ...errorResponses },
       },
-    );
-  }
+    },
+    async () => {
+      throw notImplemented(
+        'oauth_not_configured',
+        'Third-party sign-in requires provider credentials that are not configured yet',
+      );
+    },
+  );
 };
 
 export default authRoutes;

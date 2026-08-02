@@ -98,3 +98,39 @@ export const oauthStartBodySchema = z.object({
   provider: z.enum(IDENTITY_PROVIDERS),
   idToken: z.string().min(1).optional(),
 });
+
+export const appleSignInBodySchema = z.object({
+  identityToken: z
+    .string()
+    .min(1)
+    .describe('ASAuthorizationAppleIDCredential.identityToken — an RS256 JWT signed by Apple'),
+  authorizationCode: z
+    .string()
+    .min(1)
+    .optional()
+    .describe('Single-use code; accepted now, exchanged server-side once token revocation lands'),
+  fullName: z
+    .object({
+      givenName: z.string().trim().max(100).optional(),
+      familyName: z.string().trim().max(100).optional(),
+    })
+    .optional()
+    .describe(
+      'Apple releases the name on the FIRST authorization only, and only to the client — pass it through here or it is lost permanently',
+    ),
+});
+export type AppleSignInBody = z.infer<typeof appleSignInBodySchema>;
+
+export const appleSignInResponseSchema = z.union([
+  z.object({
+    status: z.literal('authenticated'),
+    created: z.boolean().describe('True when this request created the account'),
+    user: authUserSchema,
+    tokens: tokenPairSchema,
+  }),
+  z.object({
+    status: z.literal('mfa_required'),
+    mfaTicket: z.string(),
+    expiresIn: z.number().int(),
+  }),
+]);
