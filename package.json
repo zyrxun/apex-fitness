@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace @apex/api",
-    "test": "npm run test --workspace @apex/api",
+    "test": "npm run test --workspaces --if-present",
+    "mobile": "npm run start --workspace @apex/mobile",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "db:generate": "npm run db:generate --workspace @apex/api",
     "db:migrate": "npm run db:migrate --workspace @apex/api",
