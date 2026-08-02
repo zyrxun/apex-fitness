@@ -405,12 +405,11 @@ describe('TOTP two-factor', () => {
 });
 
 describe('third-party sign-in seam', () => {
-  it.each(['/auth/apple', '/auth/google'])('%s returns 501 until configured', async (url) => {
-    const res = await h.app.inject({
-      method: 'POST',
-      url,
-      payload: { provider: url.endsWith('apple') ? 'apple' : 'google', idToken: 'x' },
-    });
+  it.each([
+    ['/auth/apple', { identityToken: 'not.a.real.token' }],
+    ['/auth/google', { provider: 'google', idToken: 'x' }],
+  ])('%s returns 501 until configured', async (url, payload) => {
+    const res = await h.app.inject({ method: 'POST', url, payload });
     expect(res.statusCode).toBe(501);
     expect(res.json().error.code).toBe('oauth_not_configured');
   });

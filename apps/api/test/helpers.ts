@@ -18,7 +18,9 @@ export interface TestHarness {
   close: () => Promise<void>;
 }
 
-export async function createHarness(options: { rateLimit?: boolean } = {}): Promise<TestHarness> {
+export async function createHarness(
+  options: { rateLimit?: boolean; env?: Record<string, string> } = {},
+): Promise<TestHarness> {
   const baseUrl = inject('pgBaseUrl');
   const templateDb = inject('templateDb');
   const dbName = `apex_test_${randomUUID().replace(/-/g, '')}`;
@@ -36,6 +38,7 @@ export async function createHarness(options: { rateLimit?: boolean } = {}): Prom
     MAIL_TRANSPORT: 'memory',
     RATE_LIMIT_DISABLED: options.rateLimit ? 'false' : 'true',
     LOG_LEVEL: 'silent',
+    ...options.env,
   } as NodeJS.ProcessEnv);
 
   const { db, sql } = createDb(databaseUrl, { max: 4 });
