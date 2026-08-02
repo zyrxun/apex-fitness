@@ -82,7 +82,7 @@ We are not "Strava but cheaper" or "Liftoff but fair." We are the only app for a
 ## 4. Architecture Overview
 
 ### 4.1 Platform targets
-- **Mobile:** iOS + Android (single codebase — React Native or Flutter; decide in Phase 0 spike). GPS recording must run as native background modules regardless of framework.
+- **Mobile:** iOS + Android — **React Native (Expo dev-client) shell around a native Swift/Kotlin recording core**. Decided in [ADR 0001](docs/decisions/0001-mobile-stack.md); GPS recording runs as native background modules (Transistorsoft SDK + our own Nitro modules).
 - **Watch:** Apple Watch (workout recording without phone), Wear OS; Garmin/Coros/Polar via file sync integrations first.
 - **Web:** analysis dashboard, route planner, club admin, account/data management.
 
