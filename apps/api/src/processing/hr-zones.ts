@@ -40,7 +40,9 @@ export function resolveMaxHr(
   return { maxHr: DEFAULT_MAX_HR, source: 'default' };
 }
 
-export function zoneBounds(zones: ResolvedHrZones): { zone: number; minBpm: number; maxBpm: number | null }[] {
+export function zoneBounds(
+  zones: ResolvedHrZones,
+): { zone: number; minBpm: number; maxBpm: number | null }[] {
   return zones.boundariesPct.map((pct, i) => {
     const next = zones.boundariesPct[i + 1];
     return {

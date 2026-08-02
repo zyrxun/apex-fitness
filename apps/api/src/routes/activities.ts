@@ -318,7 +318,7 @@ const activityRoutes: FastifyPluginAsyncZod = async (app) => {
         tags: ['activities'],
         summary: 'Selected streams for an activity',
         description:
-          'Positional streams are nulled at every index inside one of the owner\'s privacy ' +
+          "Positional streams are nulled at every index inside one of the owner's privacy " +
           'zones (plus a stable random extension beyond the zone edge). Other streams keep ' +
           'their samples so everything stays index-aligned with `time`.',
         security: [{ bearerAuth: [] }],
@@ -346,8 +346,10 @@ const activityRoutes: FastifyPluginAsyncZod = async (app) => {
 
       // The plan comes from the cleaned track when we have one so a raw fix and
       // its smoothed counterpart are censored at exactly the same indices.
-      const reference = (rows.find((r) => r.streamType === 'latlng_clean') ??
-        rows.find((r) => r.streamType === 'latlng'))?.data as (LatLng | null)[] | undefined;
+      const reference = (
+        rows.find((r) => r.streamType === 'latlng_clean') ??
+        rows.find((r) => r.streamType === 'latlng')
+      )?.data as (LatLng | null)[] | undefined;
       const plan = reference ? planStreamRedaction(view, reference) : null;
 
       const streams: Record<string, { type: StreamType; sampleCount: number; data: unknown[] }> =

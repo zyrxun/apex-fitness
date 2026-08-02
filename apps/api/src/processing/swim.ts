@@ -25,10 +25,7 @@ export const SWOLF_REFERENCE_POOL_M = 25;
  * Strava reports SWOLF inconsistently and never for open water; first-class
  * swimming is PLAN pillar 7.
  */
-export function computeSwimStats(
-  lengths: SwimLengthInput[],
-  poolLengthM: number,
-): SwimStats {
+export function computeSwimStats(lengths: SwimLengthInput[], poolLengthM: number): SwimStats {
   const lengthCount = lengths.length;
   const distanceM = lengthCount * poolLengthM;
 

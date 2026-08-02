@@ -82,8 +82,7 @@ export function computeSplits(input: SplitInput): ComputedSplit[] {
   // Pass 2 — elevation gain with a hysteresis reference carried across the
   // whole activity (so the splits sum to the activity total) and time-weighted
   // heart rate, both attributed to the split the sample lands in.
-  const bucketOf = (i: number) =>
-    Math.min(count - 1, Math.floor((cumulativeM[i] ?? 0) / unitM));
+  const bucketOf = (i: number) => Math.min(count - 1, Math.floor((cumulativeM[i] ?? 0) / unitM));
 
   let reference: number | null = null;
   const firstAlt: (number | null)[] = new Array(count).fill(null);

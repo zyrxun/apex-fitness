@@ -237,14 +237,19 @@ export const streamsQuerySchema = z.object({
   keys: z
     .string()
     .optional()
-    .describe(`Comma-separated subset of: ${STREAM_TYPES.join(', ')}. Omit for all stored streams.`),
+    .describe(
+      `Comma-separated subset of: ${STREAM_TYPES.join(', ')}. Omit for all stored streams.`,
+    ),
 });
 
 export const activityStreamsResponseSchema = z.object({
   activityId: uuidSchema,
   privacyRedacted: z.boolean(),
+  // Keyed by stream type. Deliberately a loose record rather than an enum-keyed
+  // one: only the streams that exist (and that the viewer may see) are present,
+  // and an exhaustive key schema would demand all of them.
   streams: z.record(
-    z.enum(STREAM_TYPES),
+    z.string(),
     z.object({
       type: z.enum(STREAM_TYPES),
       sampleCount: z.number().int(),
@@ -282,7 +287,13 @@ export const hrZonesSchema = z.object({
   maxHr: z.number().int().describe('Explicit max HR, or the 220−age fallback'),
   maxHrSource: z.enum(['configured', 'age_estimate', 'default']),
   boundariesPct: z.array(z.number().int()).length(5).describe('Lower bound of z1..z5 as % of max'),
-  zones: z.array(z.object({ zone: z.number().int(), minBpm: z.number().int(), maxBpm: z.number().int().nullable() })),
+  zones: z.array(
+    z.object({
+      zone: z.number().int(),
+      minBpm: z.number().int(),
+      maxBpm: z.number().int().nullable(),
+    }),
+  ),
 });
 
 export const updateHrZonesBodySchema = z

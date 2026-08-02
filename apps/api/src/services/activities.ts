@@ -165,8 +165,7 @@ export async function createManualActivity(
       movingS: body.elapsedS,
       distanceM: body.distanceM ?? 0,
       elevGainM: body.elevGainM ?? 0,
-      avgSpeedMs:
-        body.distanceM && body.elapsedS > 0 ? body.distanceM / body.elapsedS : null,
+      avgSpeedMs: body.distanceM && body.elapsedS > 0 ? body.distanceM / body.elapsedS : null,
       avgHr: body.avgHr ?? null,
       calories: body.calories ?? null,
       isManual: true,
@@ -403,10 +402,7 @@ export interface PersonalRecord {
  * Current best per distance across every activity the user still owns. Ties go
  * to the earliest attempt — a record you cannot beat, only match, stays yours.
  */
-export async function personalRecords(
-  ctx: AppContext,
-  userId: string,
-): Promise<PersonalRecord[]> {
+export async function personalRecords(ctx: AppContext, userId: string): Promise<PersonalRecord[]> {
   const rows = await ctx.db
     .select({
       distanceM: activityEfforts.distanceM,

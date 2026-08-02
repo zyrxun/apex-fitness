@@ -14,7 +14,7 @@ const sportRoutes: FastifyPluginAsyncZod = async (app) => {
         tags: ['sports'],
         summary: 'The full sport taxonomy with category metadata',
         description:
-          'Superset of Strava\'s sport types. Clients drive their sport picker from this ' +
+          "Superset of Strava's sport types. Clients drive their sport picker from this " +
           'rather than hardcoding a list, so adding a sport never needs an app release.',
         response: { 200: sportsResponseSchema },
       },

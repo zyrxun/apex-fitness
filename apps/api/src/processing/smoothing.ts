@@ -3,13 +3,18 @@
  * because a median is immune to a single wild fix — the exact failure mode GPS
  * has in urban canyons — where a mean would drag the whole neighbourhood
  * toward the outlier. Nulls are passed through untouched.
+ *
+ * The window shrinks symmetrically near the ends rather than leaning inward: a
+ * lopsided window pulls the first and last fixes toward the middle of the
+ * track, quietly shortening every activity by a sample at each end.
  */
 export function movingMedian(values: (number | null)[], window: number): (number | null)[] {
   const half = Math.floor(window / 2);
   return values.map((value, i) => {
     if (value === null) return null;
+    const radius = Math.min(half, i, values.length - 1 - i);
     const slice: number[] = [];
-    for (let j = Math.max(0, i - half); j <= Math.min(values.length - 1, i + half); j += 1) {
+    for (let j = i - radius; j <= i + radius; j += 1) {
       const v = values[j];
       if (v !== null && v !== undefined) slice.push(v);
     }
@@ -29,9 +34,10 @@ export function movingAverage(values: (number | null)[], window: number): (numbe
   const half = Math.floor(window / 2);
   return values.map((value, i) => {
     if (value === null) return null;
+    const radius = Math.min(half, i, values.length - 1 - i);
     let sum = 0;
     let count = 0;
-    for (let j = Math.max(0, i - half); j <= Math.min(values.length - 1, i + half); j += 1) {
+    for (let j = i - radius; j <= i + radius; j += 1) {
       const v = values[j];
       if (v !== null && v !== undefined) {
         sum += v;

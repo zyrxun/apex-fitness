@@ -33,6 +33,7 @@ const privacyRoutes: FastifyPluginAsyncZod = async (app) => {
     hidePace: row.hidePace,
     hideHeartrate: row.hideHeartrate,
     aggregateOptIn: row.aggregateOptIn,
+    privacyZonesEnabled: row.privacyZonesEnabled,
     updatedAt: isoRequired(row.updatedAt),
   });
 

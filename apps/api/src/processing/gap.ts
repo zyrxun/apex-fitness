@@ -58,24 +58,21 @@ export interface GapSegment {
 }
 
 /**
- * Whole-activity GAP in seconds per kilometre. Summing per-segment equivalent
- * times is materially better than adjusting the average gradient once: an
- * out-and-back has zero net gradient but is genuinely harder than flat ground,
- * and only the segment-wise sum captures that.
+ * Whole-activity GAP in seconds per kilometre: the real elapsed time over the
+ * equivalent flat distance, where each segment contributes its own length
+ * scaled by its own cost. Adjusting the average gradient once would score an
+ * out-and-back as flat, when the climb costs far more than the descent refunds;
+ * summing equivalent distances is the only aggregation that conserves work.
  */
 export function averageGapSecPerKm(segments: GapSegment[]): number | null {
-  let distance = 0;
-  let adjusted = 0;
+  let equivalentM = 0;
+  let elapsedS = 0;
   for (const segment of segments) {
-    const seconds = gradeAdjustedSeconds(
-      segment.distanceM,
-      segment.elapsedS,
-      segment.elevationChangeM,
-    );
-    if (seconds === null) continue;
-    distance += segment.distanceM;
-    adjusted += seconds;
+    if (segment.distanceM <= 0 || segment.elapsedS <= 0) continue;
+    equivalentM +=
+      segment.distanceM * gradeAdjustmentFactor(segment.elevationChangeM / segment.distanceM);
+    elapsedS += segment.elapsedS;
   }
-  if (distance <= 0) return null;
-  return (adjusted / distance) * 1000;
+  if (equivalentM <= 0) return null;
+  return (elapsedS / equivalentM) * 1000;
 }

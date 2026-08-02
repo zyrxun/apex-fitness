@@ -73,10 +73,7 @@ export async function loadActivityForViewer(
 }
 
 /** Zones only apply when the owner has the feature switched on (default: yes). */
-export async function loadOwnerPrivacy(
-  ctx: AppContext,
-  ownerId: string,
-): Promise<OwnerPrivacy> {
+export async function loadOwnerPrivacy(ctx: AppContext, ownerId: string): Promise<OwnerPrivacy> {
   const [settings] = await ctx.db
     .select({
       enabled: privacySettings.privacyZonesEnabled,

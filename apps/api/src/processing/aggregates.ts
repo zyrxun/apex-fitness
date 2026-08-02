@@ -38,7 +38,9 @@ export function speedStats(
   let max: number | null = null;
   for (let i = 1; i < speedMs.length - 1; i += 1) {
     if (!moving[i]) continue;
-    const window = [speedMs[i - 1] ?? 0, speedMs[i] ?? 0, speedMs[i + 1] ?? 0].sort((a, b) => a - b);
+    const window = [speedMs[i - 1] ?? 0, speedMs[i] ?? 0, speedMs[i + 1] ?? 0].sort(
+      (a, b) => a - b,
+    );
     const median = window[1]!;
     if (max === null || median > max) max = median;
   }

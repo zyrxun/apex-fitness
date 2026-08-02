@@ -10,6 +10,9 @@ export const privacySettingsSchema = z.object({
   hidePace: z.boolean(),
   hideHeartrate: z.boolean(),
   aggregateOptIn: z.boolean().describe('Opt-in (not opt-out) to aggregate/heatmap-style data'),
+  privacyZonesEnabled: z
+    .boolean()
+    .describe('Master switch: when false, zones are kept but stop redacting activities'),
   updatedAt: z.string(),
 });
 export type PrivacySettings = z.infer<typeof privacySettingsSchema>;
@@ -22,6 +25,7 @@ export const updatePrivacyBodySchema = z
     hidePace: z.boolean(),
     hideHeartrate: z.boolean(),
     aggregateOptIn: z.boolean(),
+    privacyZonesEnabled: z.boolean(),
   })
   .partial();
 

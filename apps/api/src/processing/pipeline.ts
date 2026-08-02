@@ -122,18 +122,14 @@ export function runPipeline(input: PipelineInput): PipelineResult {
     distanceM = input.clientDistanceM ?? 0;
     const span = n > 1 ? (time[n - 1] ?? 0) - (time[0] ?? 0) : 0;
     cumulativeM =
-      span > 0
-        ? time.map((t) => (((t - (time[0] ?? 0)) / span) * distanceM))
-        : new Array(n).fill(0);
+      span > 0 ? time.map((t) => ((t - (time[0] ?? 0)) / span) * distanceM) : new Array(n).fill(0);
   }
 
   // (c) Moving time. A recorder's own pause flags beat inference from speed.
   const derivedMoving = detectMovingTime(cumulativeM, time, profile.movingThresholdMs);
   const clientFlags = input.streams?.moving;
   const moving = clientFlags ?? derivedMoving.moving;
-  let movingS = clientFlags
-    ? movingTimeFromFlags(clientFlags, time)
-    : derivedMoving.movingS;
+  let movingS = clientFlags ? movingTimeFromFlags(clientFlags, time) : derivedMoving.movingS;
   if (n === 0) movingS = input.clientMovingS ?? input.elapsedS;
   movingS = Math.min(Math.round(movingS), input.elapsedS);
 

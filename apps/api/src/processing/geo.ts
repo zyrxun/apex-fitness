@@ -12,8 +12,7 @@ export function haversineM(a: LatLng, b: LatLng): number {
   const dLng = toRad(b[1] - a[1]);
   const lat1 = toRad(a[0]);
   const lat2 = toRad(b[0]);
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
   return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
