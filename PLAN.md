@@ -179,19 +179,19 @@ Work through in order; phases 1–4 are the MVP line. Items marked 🇨🇳 are 
 ### Phase 2 — Activity Recording (Endurance)
 - [ ] Native GPS background recording module (iOS + Android): start/pause/auto-pause/resume/stop
 - [ ] Battery-optimized location sampling; tunnel/canyon signal-loss handling
-- [ ] GPS smoothing & outlier rejection pipeline
-- [ ] Sport-type taxonomy (~70 types, superset of Strava's enums)
-- [ ] **Run:** pace, splits, cadence, GAP (grade-adjusted pace) model
-- [ ] **Ride:** speed, power meter pairing (BLE), cadence sensors
-- [ ] **Swim (first-class):** pool mode (length count, auto lap detect, SWOLF, stroke type), open-water mode (GPS smoothing tuned for water), drill/kick logging
-- [ ] Indoor modes: treadmill (accelerometer distance), trainer, indoor swim without GPS
-- [ ] Heart-rate: BLE strap pairing + watch HR ingestion; zones config
-- [ ] Elevation: barometric + DEM-corrected elevation profiles
+- [ ] GPS smoothing & outlier rejection pipeline — *(backend done, mobile pending: server-side cleanup on upload — speed-ceiling outlier rejection + moving-median smoothing, raw stream kept verbatim; on-device pre-filtering still to come)*
+- [ ] Sport-type taxonomy (~70 types, superset of Strava's enums) — *(backend done, mobile pending: 70 types with category/GPS/pool metadata, served from `GET /sports` so the picker needs no app release to gain a sport)*
+- [ ] **Run:** pace, splits, cadence, GAP (grade-adjusted pace) model — *(backend done, mobile pending: per-km and per-mile splits, cadence aggregates, Minetti-based GAP)*
+- [ ] **Ride:** speed, power meter pairing (BLE), cadence sensors — *(backend partial, mobile pending: power and cadence streams are stored and aggregated; BLE pairing is on-device)*
+- [ ] **Swim (first-class):** pool mode (length count, auto lap detect, SWOLF, stroke type), open-water mode (GPS smoothing tuned for water), drill/kick logging — *(backend partial, mobile pending: pool lengths with stroke type, SWOLF normalised to 25 m, pool distance authoritative over GPS; auto lap detect and drill logging are on-device)*
+- [ ] Indoor modes: treadmill (accelerometer distance), trainer, indoor swim without GPS — *(backend done, mobile pending: `isTrainer`/`isIndoor` flags and a GPS-free pipeline path that trusts client distance; accelerometer distance is on-device)*
+- [ ] Heart-rate: BLE strap pairing + watch HR ingestion; zones config — *(backend partial, mobile pending: zones config (`/me/hr-zones`, 220−age fallback) and time-in-zone on every upload; BLE pairing is on-device)*
+- [ ] Elevation: barometric + DEM-corrected elevation profiles — *(backend partial, mobile pending: smoothing + ±2 m hysteresis gain/loss from the barometric stream; DEM correction needs an elevation dataset)*
 - [ ] Live recording screen with configurable data fields
 - [ ] Beacon-equivalent live safety sharing (free, basic)
 - [ ] Auto-detect activity start (optional)
-- [ ] Manual activity entry (no GPS)
-- [ ] Crash/kill recovery — never lose a recording
+- [ ] Manual activity entry (no GPS) — *(backend done, mobile pending: `POST /activities/manual`)*
+- [ ] Crash/kill recovery — never lose a recording — *(backend done, mobile pending: client-generated `uploadId` is unique per user, so a retried upload resolves to the same activity; on-device journalling still to come)*
 
 ### Phase 3 — Ingestion, Import & Device Ecosystem
 - [ ] FIT, TCX, GPX parsers → canonical activity format
