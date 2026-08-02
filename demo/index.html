@@ -1655,11 +1655,9 @@ svg :focus-visible, svg *:focus { outline-offset: 0; }
         "font-family": "var(--f-mono)", "text-anchor": "end" }, s);
       t.textContent = "KM 6 \u00B7 +48 m";
       if (!reduced) {
-        var len = line.getTotalLength ? line.getTotalLength() : 1400;
-        line.setAttribute("stroke-dasharray", len);
-        line.setAttribute("stroke-dashoffset", len);
-        line.style.transition = "stroke-dashoffset 1400ms cubic-bezier(0.3,0.7,0.2,1)";
-        window.setTimeout(function () { line.setAttribute("stroke-dashoffset", "0"); }, 60);
+        line.style.opacity = "0";
+        line.style.transition = "opacity 700ms ease";
+        window.setTimeout(function () { line.style.opacity = "1"; }, 60);
       }
     }
   }
@@ -1915,43 +1913,45 @@ svg :focus-visible, svg *:focus { outline-offset: 0; }
     var mark = document.getElementById("scoremark");
     var label = document.getElementById("marklabel");
 
+    var G = gaugeParts;
+    var endAngle = G.A0 + G.SWEEP * (SCORE / 100);
+
     if (apexAnimated || reduced) {
       eFill.style.width = "81%";
       sFill.style.width = "68%";
       mark.style.left = "73%";
       label.style.left = "73%";
       document.getElementById("gauge-num").textContent = SCORE;
-      if (gaugeParts && !apexAnimated) {
-        gaugeParts.prog.setAttribute("stroke-dasharray", "none");
-      }
+      G.prog.setAttribute("d", arcPath(G.cx, G.cy, G.r, G.A0, endAngle));
       apexAnimated = true;
       return;
     }
     apexAnimated = true;
 
-    /* one orchestrated moment: the arc sweeps, the number counts, the axes fill */
-    var len = gaugeParts.prog.getTotalLength ? gaugeParts.prog.getTotalLength() : 400;
-    gaugeParts.prog.setAttribute("stroke-dasharray", len);
-    gaugeParts.prog.setAttribute("stroke-dashoffset", len);
-    gaugeParts.knob.style.opacity = "0";
-    gaugeParts.prog.style.transition = "stroke-dashoffset 1100ms cubic-bezier(0.2,0.8,0.25,1)";
-    gaugeParts.knob.style.transition = "opacity 260ms ease 900ms";
+    /* one orchestrated moment: the arc grows, the number counts, the axes fill.
+       The arc is re-drawn per frame (pure geometry) rather than dash-animated —
+       stroke-dasharray transitions on round-capped arcs crash some renderers. */
+    G.prog.setAttribute("d", arcPath(G.cx, G.cy, G.r, G.A0, G.A0 + 0.6));
+    G.knob.style.opacity = "0";
+    G.knob.style.transition = "opacity 260ms ease";
 
     var numEl = document.getElementById("gauge-num");
     numEl.textContent = "0";
 
-    window.setTimeout(function () {
-      gaugeParts.prog.setAttribute("stroke-dashoffset", "0");
-      gaugeParts.knob.style.opacity = "1";
-      var t0 = performance.now();
-      function tick(now) {
-        var p = Math.min(1, (now - t0) / 1050);
-        var eased = 1 - Math.pow(1 - p, 3);
-        numEl.textContent = Math.round(SCORE * eased);
-        if (p < 1) { requestAnimationFrame(tick); } else { numEl.textContent = SCORE; }
+    var t0 = null;
+    function tick(now) {
+      if (t0 === null) { t0 = now; }
+      var p = Math.min(1, (now - t0) / 1100);
+      var eased = 1 - Math.pow(1 - p, 3);
+      var a = G.A0 + (endAngle - G.A0) * eased;
+      if (a > G.A0 + 0.6) {
+        G.prog.setAttribute("d", arcPath(G.cx, G.cy, G.r, G.A0, a));
       }
-      requestAnimationFrame(tick);
-    }, 80);
+      numEl.textContent = Math.round(SCORE * eased);
+      if (p < 1) { requestAnimationFrame(tick); }
+      else { numEl.textContent = SCORE; G.knob.style.opacity = "1"; }
+    }
+    requestAnimationFrame(tick);
 
     window.setTimeout(function () {
       eFill.style.width = "81%";
