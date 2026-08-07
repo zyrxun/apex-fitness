@@ -11,8 +11,11 @@ integration tests against real Postgres.
 
 📱 **Phase 2 mobile just started** — `apps/mobile` is scaffolded per
 [ADR 0001](docs/decisions/0001-mobile-stack.md) (Expo dev-client + React
-Native), imports `@apex/shared` end to end, and records against a mock
-`ActivityRecorder`. The native recording core has not landed. No web client yet.
+Native) and imports `@apex/shared` end to end. The native recording core
+(`react-native-background-geolocation`, licence-free in DEBUG) is wired up
+behind the `ActivityRecorder` interface; the mock recorder remains as the test
+double and as the fallback for builds with no native module. Nothing has run on
+a device yet. No web client yet.
 
 See [apps/api/README.md](apps/api/README.md) and
 [apps/mobile/README.md](apps/mobile/README.md) to run them, and
@@ -27,8 +30,8 @@ npm test
 
 ### Repo layout
 
-| Path              | What                                                    |
-| ----------------- | ------------------------------------------------------- |
-| `apps/api`        | Fastify + Drizzle + Postgres backend                    |
-| `apps/mobile`     | Expo / React Native app — scaffold, recording is mocked |
-| `packages/shared` | Zod schemas, shared types, unit-conversion helpers      |
+| Path              | What                                                |
+| ----------------- | --------------------------------------------------- |
+| `apps/api`        | Fastify + Drizzle + Postgres backend                |
+| `apps/mobile`     | Expo / React Native app — scaffold + recording core |
+| `packages/shared` | Zod schemas, shared types, unit-conversion helpers  |
