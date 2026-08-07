@@ -1,19 +1,22 @@
 /**
- * A bare recording screen, driven entirely by the `ActivityRecorder` interface.
+ * The bare recording screen from ADR 0001 build task 2 — start and stop, points
+ * streaming to the console, and nothing else.
  *
  * Note what is *not* imported here: any geolocation SDK, any permission API,
- * any native module. Swapping `MockActivityRecorder` for the Transistorsoft
- * implementation (ADR 0001 build task 2) is a one-line change in this file and
- * nothing else in the app moves. That is the escape hatch from ADR §5, and it
- * only stays real if it is enforced from the first screen.
+ * any native module. The screen asks `createActivityRecorder` for whatever this
+ * build can run and talks to it through the `ActivityRecorder` interface, so
+ * the Transistorsoft implementation and `MockActivityRecorder` are
+ * indistinguishable from up here apart from the label at the bottom. That is
+ * the escape hatch from ADR §5, and it only stays real if it is enforced from
+ * the first screen.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { fromCanonicalMeters, type SportType } from '@apex/shared';
 
-import type { ActivityRecorder, RecorderState, RecordingMetrics } from '../recording';
-import { MockActivityRecorder, sessionToStreams } from '../recording';
+import type { ActiveRecorder, RecorderState, RecordingMetrics } from '../recording';
+import { createActivityRecorder, sessionToStreams } from '../recording';
 import { formatDuration, theme } from '../theme';
 
 const SPORT: SportType = 'TrailRun';
@@ -33,13 +36,20 @@ const paceLabel = (speedMs: number | null): string => {
 };
 
 export function RecordScreen(): React.JSX.Element {
-  // One recorder for the life of the screen. The real one owns a native session
-  // and must not be reconstructed on re-render.
-  const recorderRef = useRef<ActivityRecorder | null>(null);
-  if (recorderRef.current === null) {
-    recorderRef.current = new MockActivityRecorder({ intervalMs: 1000, speedMs: 3.2 });
+  // A recorder owns exactly one session: `stopped` and `discarded` are terminal
+  // states, so the screen retires the instance and asks for a fresh one rather
+  // than trying to reset a native session that has already been torn down.
+  // Reconstructing on every render would be worse than either — the real
+  // recorder holds subscriptions to the native module.
+  const [generation, setGeneration] = useState(0);
+  const activeRef = useRef<{ generation: number; active: ActiveRecorder } | null>(null);
+  if (activeRef.current === null || activeRef.current.generation !== generation) {
+    activeRef.current = {
+      generation,
+      active: createActivityRecorder({ mock: { intervalMs: 1000, speedMs: 3.2 } }),
+    };
   }
-  const recorder = recorderRef.current;
+  const { recorder, implementation, fallbackReason } = activeRef.current.active;
 
   const [state, setState] = useState<RecorderState>(recorder.getState());
   const [metrics, setMetrics] = useState<RecordingMetrics>(EMPTY_METRICS);
@@ -48,6 +58,7 @@ export function RecordScreen(): React.JSX.Element {
   useEffect(() => {
     const offMetrics = recorder.onMetrics((next) => setMetrics({ ...next }));
     const offState = recorder.onStateChange((change) => setState(change.state));
+    setState(recorder.getState());
     return () => {
       offMetrics();
       offState();
@@ -71,6 +82,14 @@ export function RecordScreen(): React.JSX.Element {
         `${streams.latlng?.length ?? 0} fixes · ${streams.heartrate?.length ?? 0} HR readings`,
     );
     setMetrics({ ...session.metrics });
+    setGeneration((current) => current + 1);
+  }, [recorder]);
+
+  const onDiscard = useCallback(async () => {
+    await recorder.discard();
+    setSummary(null);
+    setMetrics(EMPTY_METRICS);
+    setGeneration((current) => current + 1);
   }, [recorder]);
 
   const distance = useMemo(() => fromCanonicalMeters(metrics.distanceM, 'metric'), [metrics]);
@@ -96,15 +115,15 @@ export function RecordScreen(): React.JSX.Element {
         {isLive ? <Button label="Pause" onPress={() => void recorder.pause()} /> : null}
         {isPaused ? <Button label="Resume" onPress={() => void recorder.resume()} /> : null}
         {isLive || isPaused ? <Button label="Stop" tone="bad" onPress={onStop} /> : null}
-        {isPaused ? <Button label="Discard" onPress={() => void recorder.discard()} /> : null}
+        {isPaused ? <Button label="Discard" onPress={() => void onDiscard()} /> : null}
       </View>
 
       {summary ? <Text style={styles.summary}>{summary}</Text> : null}
 
       <Text style={styles.footnote}>
-        Recording is a MockActivityRecorder replaying a hardcoded loop. The native core
-        (react-native-background-geolocation) lands in ADR 0001 build task 2 behind this same
-        interface.
+        {implementation === 'background-geolocation'
+          ? 'Recording through react-native-background-geolocation. Fixes stream to the Metro console; the SDK is licence-free in DEBUG builds.'
+          : `No native recording module in this build, so a MockActivityRecorder is replaying a hardcoded loop. Run expo prebuild and a dev-client build to record for real. (${fallbackReason})`}
       </Text>
     </ScrollView>
   );
